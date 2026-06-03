@@ -1,0 +1,203 @@
+  :root {
+    --primary-core: #2b3ffa;
+    --primary-soft: rgba(99, 102, 241, 0.08);
+    --primary-gradient: linear-gradient(135deg, #160af7 0%, #3a82ed 100%);
+    --success-core: #10b981;
+    --success-soft: rgba(16, 185, 129, 0.08);
+    --bg-main: #f8fafc;
+    --card-bg: #fcfcfd;
+    --border-color: #f1f5f9;
+    --text-muted: #64748b;
+    --radius-premium: 20px;
+    --shadow-bento: 0 4px 30px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+
+  body {
+    background-color: var(--bg-main);
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    color: #0f172a;
+  }
+
+  .custom-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+  .custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 20px;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .bento-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-premium);
+    box-shadow: var(--shadow-bento);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .bento-card:hover {
+    box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.06);
+    border-color: #e2e8f0;
+  }
+
+  .premio-card {
+    background: var(--card-bg);
+    border: 1px solid #f1f5f9;
+    border-radius: 16px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .premio-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+    box-shadow: 0 12px 24px -10px rgba(0,0,0,0.08);
+  }
+  .premio-card.selected {
+    border: 2px solid var(--primary-core) !important;
+    background: var(--primary-soft);
+    box-shadow: 0 12px 25px -8px rgba(1, 156, 253, 0.444) !important;
+  }
+
+  .form-modern {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    color: #334155;
+    transition: all 0.2s;
+  }
+  .form-modern:focus {
+    background: #ffffff;
+    border-color: var(--primary-core);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    outline: none;
+  }
+
+  .btn-modern {
+    border-radius: 14px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    letter-spacing: -0.1px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-primary-modern {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 14px rgba(49, 52, 244, 0.3);
+  }
+  .btn-primary-modern:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(46, 56, 244, 0.527);
+    filter: brightness(1.05);
+  }
+  .btn-primary-modern:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    box-shadow: none;
+  }
+
+  .btn-success-modern {
+    background: #132a60;
+    color: #ffffff;
+    border: none;
+  }
+  .btn-success-modern:hover {
+    background: #1e293b;
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .kpi-box {
+    padding: 1.25rem;
+    border-radius: 14px;
+    border: 1px solid transparent;
+  }
+
+
+  /* Por Entregar - Platino / Plata Satinado */
+.kpi-amber { 
+    background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%); 
+    border: 1px solid #94a3b8; 
+    color: #1e293b; 
+    box-shadow: 0 4px 15px rgba(148, 163, 184, 0.15);
+}
+
+/* Entregados - Oro Champagne Metálico */
+.kpi-emerald { 
+    background: linear-gradient(135deg, #dfb76c 0%, #c59b4c 100%); 
+    border: 1px solid #d29e3c; 
+    color: #ffffff; 
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(197, 155, 76, 0.3);
+}
+
+  
+  .search-wrapper .search-pill {
+    border-radius: 14px;
+    background: #f1f5f9;
+    border: 1px solid transparent;
+    padding-left: 2.75rem;
+    transition: all 0.2s;
+  }
+  .search-wrapper .search-pill:focus {
+    background: #ffffff;
+    border-color: #041595;
+    box-shadow: none;
+  }
+  .search-wrapper .search-icon {
+    position: absolute;
+    left: 1.1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #20088db6;
+  }
+
+  .accordion-modern .accordion-button {
+    background: #f8fafc;
+    border-radius: 12px !important;
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    border: 1px solid #dce4eb;
+    color: #080556e3;
+  }
+  .accordion-modern .accordion-button:not(.collapsed) {
+    background: #ffffff;
+    color: var(--primary-core);
+    box-shadow: none;
+    border-color: var(--primary-soft);
+  }
+  .accordion-modern .accordion-body {
+    background: #ffffff;
+    padding: 0.25rem 0 0 0;
+  }
+
+  .historial-item {
+    border-radius: 10px;
+    transition: all 0.2s;
+    margin: 4px 0;
+  }
+  .historial-item:hover {
+    background: #f8fafc;
+    padding-left: 1.25rem !important;
+  }
+
+  .icon-illustration {
+    height: 100px;
+    background: radial-gradient(circle at top right, var(--primary-soft) 0%, transparent 70%);
+    position: relative;
+    overflow: hidden;
+  }
+  .icon-illustration i {
+    font-size: 2.5rem;
+    background: var(--primary-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent; /* fallback for non-WebKit browsers */
+    -webkit-text-fill-color: transparent;
+    opacity: 0.8;
+  }

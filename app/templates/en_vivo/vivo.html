@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EN VIVO - {{ guion.nombre }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-gradient: radial-gradient(ellipse at 50% 0%, #0d0d16 0%, #0a0a0f 70%);
+            --bg-header: rgba(255,255,255,0.04);
+            --header-border: rgba(255,255,255,0.06);
+            --text: #f0f0f0;
+            --text-secondary: rgba(255,255,255,0.4);
+            --text-muted: rgba(255,255,255,0.15);
+            --card-bg: rgba(255,255,255,0.03);
+            --card-border: rgba(255,255,255,0.06);
+            --card-hover-bg: rgba(255,255,255,0.05);
+            --card-hover-border: rgba(255,255,255,0.1);
+            --pill-bg: rgba(255,255,255,0.05);
+            --pill-border: rgba(255,255,255,0.06);
+            --pill-color: rgba(255,255,255,0.7);
+            --back-color: rgba(255,255,255,0.45);
+            --back-hover: #f0f0f0;
+            --undo-color: rgba(255,255,255,0.5);
+            --undo-hover: #f0f0f0;
+            --hint-color: rgba(255,255,255,0.15);
+            --section-bg: rgba(255,255,255,0.03);
+            --section-border: rgba(255,255,255,0.05);
+            --icon-alpha: 0.3;
+            --header-title: #f0f0f0;
+            --header-meta: rgba(255,255,255,0.35);
+            --swal-bg: #12121a;
+            --swal-color: #f0f0f0;
+        }
+
+        .light-theme {
+            --bg: #f4f2ed;
+            --bg-gradient: none;
+            --bg-header: #fff;
+            --header-border: #e5e2db;
+            --text: #1e293b;
+            --text-secondary: #78716c;
+            --text-muted: #a8a29e;
+            --card-bg: #fff;
+            --card-border: #e5e2db;
+            --card-hover-bg: #faf9f7;
+            --card-hover-border: #d6d3d1;
+            --pill-bg: #f4f2ed;
+            --pill-border: #e5e2db;
+            --pill-color: #78716c;
+            --back-color: #78716c;
+            --back-hover: #1e293b;
+            --undo-color: #78716c;
+            --undo-hover: #1e293b;
+            --hint-color: #a8a29e;
+            --section-bg: #fff;
+            --section-border: #e5e2db;
+            --icon-alpha: 0.4;
+            --header-title: #1e293b;
+            --header-meta: #78716c;
+            --swal-bg: #fff;
+            --swal-color: #1e293b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            background-image: var(--bg-gradient);
+            color: var(--text);
+            overflow-y: auto;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .header-live {
+            background: var(--bg-header);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--header-border);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .theme-btn {
+            background: var(--pill-bg);
+            border: 1px solid var(--pill-border);
+            color: var(--pill-color);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .theme-btn:hover {
+            background: var(--card-hover-bg);
+            color: var(--text);
+        }
+
+        .live-badge {
+            background: #ef4444;
+            color: white;
+            padding: 5px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: livePulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            flex-shrink: 0;
+        }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+        }
+
+        .section-title {
+            padding: 12px 24px;
+            margin: 16px 24px 8px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: var(--section-bg);
+            backdrop-filter: blur(12px);
+            border-radius: 10px;
+            border: 1px solid var(--section-border);
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .section-title.pregame { border-left: 4px solid #f59e0b; color: #f59e0b; }
+        .section-title.game { border-left: 4px solid #06b6d4; color: #06b6d4; }
+
+        .elementos-list {
+            padding: 0 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .elemento {
+            display: grid;
+            grid-template-columns: 160px 1fr 80px 120px;
+            align-items: center;
+            padding: 14px 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 56px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            border-left: 3px solid #f59e0b;
+        }
+        .elemento:hover {
+            background: var(--card-hover-bg);
+            border-color: var(--card-hover-border);
+        }
+        .elemento .contenido { color: var(--text); font-weight: 500; }
+        .elemento .time-col { color: #f59e0b; font-size: 0.8rem; font-weight: 600; }
+        .elemento .duracion-col { color: var(--text-secondary); font-size: 0.8rem; text-align: center; font-weight: 500; }
+        .elemento .encargado-col { color: var(--text-secondary); font-size: 0.8rem; text-align: right; font-weight: 500; }
+
+        .elemento.en_curso {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.2);
+            border-left: 4px solid #10b981;
+            box-shadow: 0 0 24px rgba(16, 185, 129, 0.08), 0 0 0 1px rgba(16, 185, 129, 0.06);
+        }
+        .elemento.en_curso:hover {
+            background: rgba(16, 185, 129, 0.12);
+        }
+        .elemento.en_curso .contenido { color: #6ee7b7; font-weight: 600; font-size: 1rem; }
+        .elemento.en_curso .time-col { color: #34d399; font-size: 1rem; }
+        .elemento.en_curso .duracion-col { color: rgba(52, 211, 153, 0.7); }
+        .elemento.en_curso .encargado-col { color: rgba(52, 211, 153, 0.7); }
+
+        .elemento.completado {
+            background: rgba(255,255,255,0.015);
+            border-color: rgba(255,255,255,0.03);
+            border-left: 3px solid rgba(107, 114, 128, 0.4);
+            opacity: 0.35;
+        }
+        .elemento.completado:hover {
+            background: rgba(255,255,255,0.015);
+        }
+        .elemento.completado .contenido { color: rgba(255,255,255,0.35); }
+        .elemento.completado .time-col { color: rgba(255,255,255,0.25); }
+        .elemento.completado .duracion-col { color: rgba(255,255,255,0.2); }
+        .elemento.completado .encargado-col { color: rgba(255,255,255,0.2); }
+
+        .time-col { font-weight: 600; font-size: 0.85rem; letter-spacing: 0.3px; }
+        .contenido { font-size: 0.9rem; padding: 0 15px; }
+        .duracion-col { text-align: center; font-size: 0.8rem; }
+        .encargado-col { text-align: right; font-size: 0.8rem; }
+
+        .undo-btn {
+            cursor: pointer;
+            opacity: 0.3;
+            transition: all 0.2s;
+            margin-right: 8px;
+            font-size: 1rem;
+            color: var(--undo-color);
+        }
+        .undo-btn:hover { opacity: 1; color: var(--undo-hover); }
+
+        .stats { display: flex; gap: 8px; font-size: 0.75rem; }
+        .stats span {
+            background: var(--pill-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--pill-border);
+            padding: 4px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-weight: 500;
+            color: var(--pill-color);
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .stats span i { margin-right: 4px; }
+
+        .back-link {
+            color: var(--back-color);
+            text-decoration: none;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            margin-right: 14px;
+            flex-shrink: 0;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--back-hover); }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            flex: 1;
+        }
+        .header-left h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--header-title);
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+        .header-left .fecha-info {
+            display: block;
+            color: var(--header-meta);
+            font-size: 0.7rem;
+            font-weight: 400;
+            transition: color 0.3s;
+        }
+
+        .hint {
+            text-align: center;
+            color: var(--hint-color);
+            font-size: 0.7rem;
+            padding: 12px;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+            transition: color 0.3s;
+        }
+
+        .en-curso-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 8px;
+            margin-left: 8px;
+            vertical-align: middle;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            animation: livePulse 1.5s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .elemento {
+                grid-template-columns: 50px 1fr 36px;
+                gap: 4px;
+                padding: 12px 14px;
+            }
+            .duracion-col { display: none; }
+            .encargado-col {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+            }
+            .encargado-col .undo-btn { font-size: 1.2rem; opacity: 0.5; padding: 4px; }
+            .contenido { font-size: 0.82rem; }
+            .time-col { font-size: 0.7rem; }
+            .header-live { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+            .stats { gap: 4px; }
+            .stats span { font-size: 0.65rem; padding: 2px 8px; }
+            .header-left h2 { font-size: 1rem; }
+            .live-badge { font-size: 0.65rem; padding: 3px 10px; }
+            .section-title { margin: 12px 14px 6px; }
+            .elementos-list { padding: 0 14px 14px; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-live">
+        <div class="header-left">
+            <a href="/en-vivo/" class="back-link"><i class="fas fa-arrow-left me-1"></i> Volver</a>
+            <div style="min-width:0;">
+                <h2><i class="fas fa-broadcast-tower me-2 text-danger" style="font-size:0.9rem;"></i>{{ guion.nombre }}</h2>
+                <small class="fecha-info">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    {% for f in fechas %}
+                        {{ f.fecha.strftime('%d/%m/%Y') }}{% if not loop.last %} / {% endif %}
+                    {% endfor %}
+                </small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="stats">
+                <span><i class="fas fa-check-circle text-success"></i><span id="countDone">0</span> listos</span>
+                <span><i class="fas fa-hourglass-half text-warning"></i><span id="countRest">0</span> restantes</span>
+                <span><i class="fas fa-users"></i><span id="vivo-viewer-count">0</span> viendo</span>
+            </div>
+            <button class="theme-btn" id="themeToggle" title="Cambiar tema">
+                <i class="fas fa-moon"></i>
+            </button>
+            <a href="{{ url_for('en_vivo.finalizar', guion_id=guion.id) }}" class="btn btn-sm" style="background:var(--pill-bg);border:1px solid var(--pill-border);color:var(--pill-color);border-radius:8px;padding:5px 14px;font-weight:500;text-decoration:none;transition:all 0.2s;" id="btnFinalizar" onmouseover="this.style.background='var(--card-hover-bg)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--pill-bg)';this.style.color='var(--pill-color)'">
+                <i class="fas fa-stop-circle me-1"></i> Finalizar
+            </a>
+            <span class="live-badge">● EN VIVO</span>
+        </div>
+    </div>
+
+    <div class="hint">
+        <i class="fas fa-mouse-pointer me-1" style="opacity:0.4;"></i> Doble clic en un evento para marcarlo como completado
+    </div>
+
+    <!-- Pre-Game -->
+    {% if pregame %}
+    <div class="section-title pregame"><i class="fas fa-clock me-2"></i>Pre-Game</div>
+    <div class="elementos-list">
+    {% for e in pregame %}
+    <div class="elemento {{ 'completado' if e.estado == 'completado' else 'en_curso' if e.estado == 'en_curso' else '' }}" data-id="{{ e.id }}" data-estado="{{ e.estado }}" ondblclick="completarYAvanzar(this)">
+        <div class="time-col">{{ e.hora }}</div>
+        <div class="contenido">
+            <strong>{{ e.contenido }}</strong>
+            {% if e.estado == 'en_curso' %}<span class="en-curso-badge">▶ EN CURSO</span>{% endif %}
+        </div>
+        <div class="duracion-col">{{ e.duracion // 60 }}m{% if e.duracion % 60 %} {{ e.duracion % 60 }}s{% endif %}</div>
+        <div class="encargado-col">
+            <span class="undo-btn" onclick="retroceder(this)" title="Retroceder">↩</span>
+            <i class="fas fa-user-circle me-1" style="opacity:var(--icon-alpha);"></i> {{ e.encargado }}
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Game -->
+    {% if game %}
+    <div class="section-title game"><i class="fas fa-baseball-ball me-2"></i>Game</div>
+    <div class="elementos-list">
+    {% set pregame_len = pregame|length %}
+    {% for e in game %}
+    {% set global_idx = pregame_len + loop.index0 %}
+    <div class="elemento {{ 'completado' if e.estado == 'completado' else 'en_curso' if e.estado == 'en_curso' else '' }}" data-id="{{ e.id }}" data-estado="{{ e.estado }}" ondblclick="completarYAvanzar(this)">
+        <div class="time-col">{{ e.hora }}</div>
+        <div class="contenido">
+            <strong>{{ e.contenido }}</strong>
+            {% if e.estado == 'en_curso' %}<span class="en-curso-badge">▶ EN CURSO</span>{% endif %}
+        </div>
+        <div class="duracion-col">{{ e.duracion // 60 }}m{% if e.duracion % 60 %} {{ e.duracion % 60 }}s{% endif %}</div>
+        <div class="encargado-col">
+            <span class="undo-btn" onclick="retroceder(this)" title="Retroceder">↩</span>
+            <i class="fas fa-user-circle me-1" style="opacity:var(--icon-alpha);"></i> {{ e.encargado }}
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not pregame and not game %}
+    <div class="d-flex flex-column align-items-center justify-content-center py-5" style="color:var(--text-muted);">
+        <i class="fas fa-inbox fa-3x mb-3"></i>
+        <p>No hay elementos en este guion</p>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const socket = io('http://' + window.location.host);
+        const guionId = {{ guion.id }};
+        let elementos = document.querySelectorAll('.elemento');
+
+        // ─── Theme toggle ──────────────────────────────────────
+        const themeToggle = document.getElementById('themeToggle');
+        const saved = localStorage.getItem('vivo-theme');
+        if (saved === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        themeToggle.addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light-theme');
+            themeToggle.innerHTML = `<i class="fas fa-${isLight ? 'sun' : 'moon'}"></i>`;
+            localStorage.setItem('vivo-theme', isLight ? 'light' : 'dark');
+        });
+
+        // ─── SocketIO ──────────────────────────────────────────
+        socket.on('connect', function() {
+            socket.emit('registrar_usuario', {
+                user_id: {{ current_user.id }},
+                nombre: {{ current_user.nombre|tojson }},
+                pagina: window.location.pathname,
+                en_vivo_id: guionId
+            });
+        });
+
+        socket.on('usuarios_actualizados', function(data) {
+            var enVivo = data.usuarios.filter(function(u) {
+                return u.en_vivo_id === guionId;
+            });
+            document.getElementById('vivo-viewer-count').textContent = enVivo.length;
+        });
+
+        socket.on('actualizar_estados', function(data) {
+            if (data.guion_id === guionId) {
+                data.estados.forEach(function(s) {
+                    var el = document.querySelector('.elemento[data-id="' + s.id + '"]');
+                    if (el) {
+                        el.dataset.estado = s.estado;
+                    }
+                });
+                actualizarColores();
+            }
+        });
+
+        // ─── Core logic ────────────────────────────────────────
+        function actualizarColores() {
+            const items = document.querySelectorAll('.elemento');
+            let huboActivo = false;
+
+            items.forEach(function(el) {
+                el.classList.remove('en_curso', 'completado');
+                const st = el.dataset.estado;
+
+                if (st === 'completado') {
+                    el.classList.add('completado');
+                } else if (st === 'en_curso' && !huboActivo) {
+                    el.classList.add('en_curso');
+                    huboActivo = true;
+                }
+            });
+
+            const total = items.length;
+            const done = document.querySelectorAll('.elemento.completado').length;
+            countDone.textContent = done;
+            countRest.textContent = total - done;
+        }
+
+        function completarYAvanzar(el) {
+            if (el.dataset.estado === 'completado') return;
+            el.dataset.estado = 'completado';
+
+            const items = document.querySelectorAll('.elemento');
+            let tomarSiguiente = false;
+            for (const item of items) {
+                if (item === el) {
+                    tomarSiguiente = true;
+                    continue;
+                }
+                if (tomarSiguiente && item.dataset.estado === 'pendiente') {
+                    item.dataset.estado = 'en_curso';
+                    break;
+                }
+            }
+
+            actualizarColores();
+            enviarEstados();
+        }
+
+        function retroceder(btn) {
+            const el = btn.closest('.elemento');
+            const estado = el.dataset.estado;
+            const items = document.querySelectorAll('.elemento');
+            const idx = Array.from(items).indexOf(el);
+
+            if (estado === 'completado') {
+                el.dataset.estado = 'en_curso';
+            } else if (estado === 'en_curso') {
+                el.dataset.estado = 'pendiente';
+                if (idx < items.length - 1) {
+                    items[idx + 1].dataset.estado = 'pendiente';
+                }
+                for (let i = idx - 1; i >= 0; i--) {
+                    if (items[i].dataset.estado === 'pendiente') {
+                        items[i].dataset.estado = 'en_curso';
+                        break;
+                    }
+                }
+            }
+
+            actualizarColores();
+            enviarEstados();
+        }
+
+        function enviarEstados() {
+            const estados = Array.from(document.querySelectorAll('.elemento')).map(function(e) {
+                return {id: e.dataset.id, estado: e.dataset.estado};
+            });
+            fetch('/en-vivo/api/sincronizar/' + guionId, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({estados: estados})
+            });
+        }
+
+        // ─── Finalizar con SweetAlert ──────────────────────────
+        document.getElementById('btnFinalizar').addEventListener('click', function(e) {
+            e.preventDefault();
+            const href = this.getAttribute('href');
+            const isLight = document.body.classList.contains('light-theme');
+            Swal.fire({
+                title: '¿Finalizar guion?',
+                text: 'El guion pasará a estado finalizado y ya no estará en vivo.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: isLight ? '#78716c' : 'rgba(255,255,255,0.2)',
+                confirmButtonText: 'Sí, finalizar',
+                cancelButtonText: 'Cancelar',
+                background: isLight ? '#fff' : '#12121a',
+                color: isLight ? '#1e293b' : '#f0f0f0',
+                backdrop: 'rgba(0,0,0,0.8)'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = href;
+                }
+            });
+        });
+
+        // ─── Touch double-tap ──────────────────────────────────
+        var lastTapTime = 0;
+        var lastTapTarget = null;
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.closest('.undo-btn')) return;
+            var target = e.target.closest('.elemento');
+            if (!target || target.classList.contains('completado')) return;
+            var now = Date.now();
+            if (lastTapTarget === target && now - lastTapTime < 300) {
+                e.preventDefault();
+                completarYAvanzar(target);
+                lastTapTime = 0;
+                lastTapTarget = null;
+            } else {
+                lastTapTime = now;
+                lastTapTarget = target;
+            }
+        }, { passive: false });
+
+        actualizarColores();
+    </script>
+</body>
+</html>

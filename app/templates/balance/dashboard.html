@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Balance de Contratos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hover-bg-light:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 py-4">
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-1 text-slate-800">
+                        <i class="fas fa-balance-scale me-2 text-primary"></i>Balance de Contratos
+                    </h1>
+                    <p class="text-muted mb-0">Gestión centralizada de pagos y saldos de contratos activos.</p>
+                </div>
+                 <button type="button" class="btn btn-primary px-4 py-2 shadow-sm fw-bold" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalRegistrarPago">
+                    <i class="fas fa-plus me-2"></i>Registrar Nuevo Pago
+                </button>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-semibold">Total Contratos</p>
+                                <h3 class="mb-0 fw-bold">{{ total_contratos|default(0) }}</h3>
+                            </div>
+                            <div class="metric-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-file-contract fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-semibold">Total Pagado</p>
+                                <h3 class="mb-0 fw-bold text-success">${{ "%.2f"|format(total_pagado|default(0)) }}</h3>
+                            </div>
+                            <div class="metric-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-money-bill-wave fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-semibold">Saldo Pendiente</p>
+                                <h3 class="mb-0 fw-bold text-warning">${{ "%.2f"|format(saldo_pendiente|default(0)) }}</h3>
+                            </div>
+                            <div class="metric-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-clock fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fas fa-briefcase me-2 text-primary"></i>Contratos Activos
+                    </h5>
+                    <span class="badge bg-secondary rounded-pill">{{ contratos_activos_lista|length }} contratos</span>
+                </div>
+
+                   <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 filter-chip active" data-filter="all" style="font-size: 0.85rem;">
+            Todos
+        </button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 filter-chip" data-filter="pending" style="font-size: 0.85rem;">
+            Pendientes
+        </button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 filter-chip" data-filter="paid" style="font-size: 0.85rem;">
+            Pagados
+        </button>
+    </div>
+
+                <div class="row g-3" id="contractsGrid">
+                    {% for c in contratos_activos_lista %}
+                    <div class="col-md-6 col-lg-4 contract-item" data-status="{{ 'paid' if c.saldo_pendiente == 0 else 'pending' }}">
+                        <div class="card contract-card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start justify-content-between mb-3">
+                                    <div>
+                                        <h6 class="text-muted mb-1 small">Contrato #{{ c.id_contrato }}</h6>
+                                        <h5 class="fw-bold mb-0">{{ c.nombre_patrocinador or 'Sin patrocinador' }}</h5>
+                                    </div>
+                                    <a href="{{ url_for('balance.generar_pdf_contrato', contrato_id=c.id_contrato) }}" 
+                                       class="btn btn-sm btn-danger rounded-circle" 
+                                       style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);" 
+                                       title="Generar PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                </div>
+
+                                <div class="mb-3">
+                                    {% if c.saldo_pendiente > 0 %}
+                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Pendiente
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-success rounded-pill px-3 py-1">
+                                        <i class="fas fa-check-circle me-1"></i>Solventado
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Progreso de pago</small>
+                                        <small class="fw-semibold">
+                                            {{ "%.1f"|format((c.monto_total - c.saldo_pendiente) / c.monto_total * 100) if c.monto_total > 0 else 0 }}%
+                                        </small>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar progress-gradient" role="progressbar"
+                                            style="width: {{ ('%.1f' % (((c.monto_total - c.saldo_pendiente) / c.monto_total * 100) if c.monto_total > 0 else 0)) }}%;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Monto Total</small>
+                                        <strong>${{ "%.2f"|format(c.monto_total) }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Saldo Pendiente</small>
+                                        <strong class="{% if c.saldo_pendiente > 0 %}text-danger{% else %}text-success{% endif %}">
+                                            ${{ "%.2f"|format(c.saldo_pendiente) }}
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                {% if c.ultimo_pago_monto %}
+                                <div class="border-top pt-2 mt-2">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-calendar-alt me-1"></i>Último pago
+                                            </small>
+                                            <span class="small fw-semibold">
+                                                {{ c.ultimo_pago_fecha.strftime('%d/%m/%Y') if c.ultimo_pago_fecha else '-' }}
+                                            </span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <small class="text-muted d-block">Monto</small>
+                                            <span class="small text-success fw-bold">
+                                                +${{ "%.2f"|format(c.ultimo_pago_monto) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="border-top pt-2 mt-2">
+                                    <div class="text-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>Sin pagos registrados
+                                        </small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-2 px-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-8">
+                        <h5 class="fw-bold mb-0">
+                            <i class="fas fa-table-list me-2 text-primary"></i>Actividad Reciente
+                        </h5>
+
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    {% if todos_pagos %}
+                    <div class="table-responsive">
+                        <table class="table datatable table-hover align-middle mb-0" id="tablaPagos">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Contrato</th>
+                                    <th>Patrocinador</th>
+                                    <th>Monto</th>
+                                    <th>Tipo</th>
+                                    <th>Referencia</th>
+                                    <th>Fecha</th>
+                                    <th class="no-order">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pago in todos_pagos %}
+                                <tr>
+                                    <td class="fw-semibold text-muted small">{{ pago.id_pago }}</td>
+                                    <td><span class="badge bg-secondary bg-opacity-10 text-dark border rounded-pill">#{{ pago.id_contrato }}</span></td>
+                                    <td class="fw-semibold">{{ pago.nombre_patrocinador or '-' }}</td>
+                                    <td><span class="text-success fw-bold">${{ "%.2f"|format(pago.monto) }}</span></td>
+                                    <td><span class="badge bg-light text-dark border rounded-pill">{{ pago.tipo_pago }}</span></td>
+                                    <td class="text-muted small">{{ pago.referencia or '-' }}</td>
+                                    <td class="text-muted small">{{ pago.fecha_pago.strftime('%d/%m/%Y') if pago.fecha_pago else '-' }}</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-link text-warning p-0 me-2 btn-editar-pago" data-id="{{ pago.id_pago }}" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-link text-danger p-0 btn-eliminar-pago" data-id="{{ pago.id_pago }}" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No hay pagos registrados aún</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+</div>
+
+<div class="modal fade" id="modalRegistrarPago" tabindex="-1" aria-labelledby="modalRegistrarPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="modalRegistrarPagoLabel"><i class="fas fa-money-bill-wave me-2 text-success"></i>Registrar Nuevo Pago</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('balance.registrar_pago') }}" id="formRegistrarPago">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold">Contrato Patrocinador *</label>
+                            <select name="id_contrato" class="form-select" id="selectContrato" required>
+                                <option value="">Seleccione un contrato</option>
+                                {% for c in contratos_activos_lista %}
+                                <option value="{{ c.id_contrato }}">{{ c.nombre_patrocinador or 'Sin patrocinador' }} - Contrato #{{ c.id_contrato }} - ${{ "%.2f"|format(c.monto_total) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div id="infoContrato" class="info-card" style="display: none; background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #0d6efd;">
+                                <div class="row text-center text-sm-start g-2">
+                                    <div class="col-sm-4">
+                                        <small class="text-muted d-block">Patrocinador</small>
+                                        <strong id="nombrePatrocinador" class="text-dark">-</strong>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <small class="text-muted d-block">Monto Total</small>
+                                        <strong class="text-dark">$<span id="montoTotalContrato">0</span></strong>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <small class="text-muted d-block">Saldo Pendiente</small>
+                                        <strong class="text-danger">$<span id="saldoPendienteContrato">0</span></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Monto a Pagar *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" name="monto" class="form-control" id="montoPago" placeholder="0.00" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo de Pago *</label>
+                            <select name="tipo_pago" class="form-select" required>
+                                <option value="Efectivo">💵 Efectivo</option>
+                                <option value="Transferencia">🏦 Transferencia</option>
+                                <option value="Cheque">📝 Cheque</option>
+                                <option value="Depósito">🏧 Depósito</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Referencia / N° Comprobante</label>
+                            <input type="text" name="referencia" class="form-control" placeholder="Ej. 984214">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Fecha Pago *</label>
+                            <input type="date" name="fecha_pago" class="form-control" value="{{ now.strftime('%Y-%m-%d') if now else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Hora Pago *</label>
+                            <input type="time" name="hora_pago" class="form-control" value="{{ now.strftime('%H:%M') if now else '' }}" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Notas / Observaciones</label>
+                            <textarea name="Descripción" class="form-control" placeholder="Añade detalles adicionales del pago..." rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="fas fa-save me-2"></i>Guardar Pago
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarPago" tabindex="-1" aria-labelledby="modalEditarPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalEditarPagoLabel"><i class="fas fa-edit me-3"></i>Editar Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarPago" method="POST" action="{{ url_for('balance.editar_pago') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="pago_id" id="edit_pago_id">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Monto</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" name="monto" id="edit_monto" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Tipo de Pago</label>
+                            <select name="tipo_pago" id="edit_tipo_pago" class="form-select" required>
+                                <option value="Efectivo">💵 Efectivo</option>
+                                <option value="Transferencia">🏦 Transferencia</option>
+                                <option value="Cheque">📝 Cheque</option>
+                                <option value="Depósito">🏧 Depósito</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Referencia</label>
+                            <input type="text" name="referencia" id="edit_referencia" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de Pago</label>
+                            <input type="date" name="fecha_pago" id="edit_fecha_pago" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Hora de Pago</label>
+                            <input type="time" name="hora_pago" id="edit_hora_pago" class="form-control" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Notas</label>
+                            <textarea name="Descripción" id="edit_notas" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-warning fw-bold text-dark">Actualizar Pago</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="{{ url_for('static', filename='js/GestionBalance.js') }}"></script>
+{% endblock %}

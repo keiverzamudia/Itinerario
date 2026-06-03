@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<style>
+  .main-content { padding: 0 !important; }
+  .main-wrapper { background: #f4f6f9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-loading" id="loginLoading">
+  <img class="loading-logo" id="loadingLogo" src="{{ url_for('static', filename='img/Logo-blanco.png') }}" alt="Logo">
+  <div class="loading-title" id="loadingTitle">Cargando sistema</div>
+  <div class="loading-bar-track" id="loadingTrack">
+    <div class="loading-bar-fill" id="loadingBarFill"></div>
+    <div class="loading-baseballs">
+      <span class="loading-baseball">⚾</span>
+      <span class="loading-baseball">⚾</span>
+      <span class="loading-baseball">⚾</span>
+      <span class="loading-baseball">⚾</span>
+      <span class="loading-baseball">⚾</span>
+    </div>
+  </div>
+</div>
+
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-card-header">
+      <span class="header-icon">⚾</span>
+      <h2>Iniciar Sesión</h2>
+      <p>Ingresa tus credenciales para acceder</p>
+    </div>
+    <div class="login-card-body">
+      <form method="POST" id="loginForm">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.email.label(class="form-label") }}
+          {{ form.email(class="form-control", placeholder="correo@ejemplo.com", autocomplete="email") }}
+        </div>
+        <div class="mb-3">
+          {{ form.password.label(class="form-label") }}
+          {{ form.password(class="form-control", placeholder="••••••", autocomplete="current-password") }}
+        </div>
+        <div class="mb-4 form-check">
+          {{ form.remember(class="form-check-input") }}
+          {{ form.remember.label(class="form-check-label text-muted small") }}
+        </div>
+        {{ form.submit(class="btn-login", id="btnLogin") }}
+      </form>
+    </div>
+    <div class="login-footer">
+      Sistema de Gestión de Itinerario &mdash; Estadio
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module" src="{{ url_for('static', filename='js/GestionAuth.js') }}"></script>
+{% endblock %}

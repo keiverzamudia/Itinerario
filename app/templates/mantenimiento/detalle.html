@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Mantenimiento #{{ mantenimiento.id }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/Mantenimiento.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{{ url_for('mantenimiento.dashboard') }}" class="btn btn-sm btn-secondary mb-3">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+
+    <div class="row">
+        <!-- Columna izquierda: datos del recurso y mantenimiento -->
+        <div class="col-md-5">
+            <div class="card mb-3">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-box"></i> Recurso</h5>
+                </div>
+                <div class="card-body">
+                    <h5>{{ recurso.nombre }}</h5>
+                    <p class="text-muted mb-0"><strong>Descripción:</strong> {{ recurso.descripcion or 'Sin descripción' }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Mantenimiento #{{ mantenimiento.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1">
+                        <strong>Estado:</strong>
+                        {% if mantenimiento.estado == 'en_espera' %}
+                            <span class="badge bg-secondary">En Espera</span>
+                        {% elif mantenimiento.estado == 'en_reparacion' %}
+                            <span class="badge bg-warning text-dark">En Reparación</span>
+                        {% elif mantenimiento.estado == 'reparado' %}
+                            <span class="badge bg-success">Reparado</span>
+                        {% elif mantenimiento.estado == 'baja' %}
+                            <span class="badge bg-danger">De Baja</span>
+                        {% elif mantenimiento.estado == 'finalizado' %}
+                            <span class="badge bg-info text-dark">Finalizado</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-1"><strong>Ingreso:</strong> {{ mantenimiento.fecha_ingreso.strftime('%d/%m/%Y') }}</p>
+                    {% if mantenimiento.fecha_salida %}
+                    <p class="mb-1"><strong>Salida:</strong> {{ mantenimiento.fecha_salida.strftime('%d/%m/%Y') }}</p>
+                    {% endif %}
+                    <p class="mb-1"><strong>Registrado por:</strong> {{ mantenimiento.usuario_nombre }}</p>
+                    <p class="mb-0"><strong>Diagnóstico:</strong> {{ mantenimiento.diagnostico }}</p>
+                    {% if mantenimiento.observaciones %}
+                    <p class="mb-0 mt-2"><strong>Observaciones:</strong> {{ mantenimiento.observaciones }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="card mb-3">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs"></i> Acciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if mantenimiento.estado == 'en_espera' %}
+                        <form method="POST" action="{{ url_for('mantenimiento.reparar', id=mantenimiento.id) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-reparar w-100 btn-confirmar-accion"
+                                    data-confirm="¿Iniciar reparación de {{ recurso.nombre }}?">
+                                <i class="fas fa-wrench"></i> Iniciar Reparación
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if mantenimiento.estado == 'en_reparacion' %}
+                        <form method="POST" action="{{ url_for('mantenimiento.reparar', id=mantenimiento.id) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-reparar w-100 btn-confirmar-accion"
+                                    data-confirm="¿Marcar {{ recurso.nombre }} como reparado?">
+                                <i class="fas fa-check-circle"></i> Marcar como Reparado
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if mantenimiento.estado in ['en_espera', 'en_reparacion'] %}
+                        <form method="POST" action="{{ url_for('mantenimiento.dar_baja', id=mantenimiento.id) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-baja w-100 btn-confirmar-accion"
+                                    data-confirm="¿Dar de BAJA {{ recurso.nombre }}? Esta acción no se puede deshacer.">
+                                <i class="fas fa-times-circle"></i> Dar de Baja
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if mantenimiento.estado in ['reparado', 'baja'] %}
+                        <form method="POST" action="{{ url_for('mantenimiento.finalizar', id=mantenimiento.id) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-secondary w-100 btn-confirmar-accion"
+                                    data-confirm="¿Finalizar mantenimiento #{{ mantenimiento.id }}?">
+                                <i class="fas fa-flag-checkered"></i> Finalizar Mantenimiento
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: historial -->
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Historial de Acciones</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Formulario para agregar nota -->
+                    {% if mantenimiento.estado in ['en_espera', 'en_reparacion'] %}
+                    <form method="POST" action="{{ url_for('mantenimiento.agregar_nota', id=mantenimiento.id) }}" id="formNota" class="mb-4">
+                        {{ nota_form.hidden_tag() }}
+                        <div class="mb-2">
+                            {{ nota_form.descripcion.label(class="form-label fw-bold") }}
+                            {{ nota_form.descripcion(class="form-control", rows=2, placeholder="Agregar nota al seguimiento...") }}
+                        </div>
+                        {{ nota_form.submit(class="btn btn-sm btn-info") }}
+                    </form>
+                    {% endif %}
+
+                    <!-- Timeline de historial -->
+                    {% if historial %}
+                    <div class="historial-timeline">
+                        {% for h in historial %}
+                        <div class="historial-item {{ h.accion }}">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ h.creado_en.strftime('%d/%m/%Y %I:%M %p') }}</small>
+                                <small class="fw-bold">
+                                    {% if h.accion == 'ingreso' %}
+                                        <span class="text-info">📥 Ingreso</span>
+                                    {% elif h.accion == 'nota' %}
+                                        <span class="text-warning">📝 Nota</span>
+                                    {% elif h.accion == 'reparar' %}
+                                        <span class="text-success">🔧 Reparación</span>
+                                    {% elif h.accion == 'baja' %}
+                                        <span class="text-danger">⛔ Baja</span>
+                                    {% elif h.accion == 'finalizar' %}
+                                        <span class="text-secondary">🏁 Finalizar</span>
+                                    {% else %}
+                                        <span>{{ h.accion }}</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <p class="mb-0 mt-1">{{ h.descripcion }}</p>
+                            <small class="text-muted">— {{ h.usuario_nombre }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay acciones registradas aún.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module" src="{{ url_for('static', filename='js/GestionMantenimiento.js') }}"></script>
+{% endblock %}

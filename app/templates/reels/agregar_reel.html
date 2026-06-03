@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Agregar Reel{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row g-4">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-video me-2"></i>Agregar Reel</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" id="reelForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Nombre del Reel <span class="text-danger">*</span></label>
+                            <input type="text" name="nombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Patrocinante</label>
+                            <select name="patrocinado" class="form-select">
+                                <option value="">Sin patrocinante</option>
+                                {% for id, nombre in patrocinadores %}
+                                <option value="{{ nombre }}">{{ nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Duración total (min,seg) <span class="text-danger">*</span></label>
+                            <input type="text" name="duracion_total" id="duracionTotal" class="form-control" placeholder="ej: 2,30" required>
+                            <small class="text-muted">Formato: minutos,segundos (ej: 2,30 → 2m 30s)</small>
+                        </div>
+
+                        <hr>
+                        <h6 class="fw-bold"><i class="fas fa-film me-1"></i>Videos del Reel</h6>
+                        <div id="videos-container"></div>
+                        <button type="button" id="agregarVideoBtn" class="btn btn-sm btn-outline-primary mt-2">
+                            <i class="fas fa-plus me-1"></i>Agregar video
+                        </button>
+
+                        <hr>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <a href="{{ url_for('reels.dashboard') }}" class="btn btn-light px-4">Cancelar</a>
+                            <button type="submit" class="btn btn-success px-4 shadow-sm fw-bold">
+                                <i class="fas fa-save me-1"></i> Guardar Reel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-list me-2"></i>Videos del Reel</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover mb-0" id="tablaVideosBody">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nombre</th>
+                                    <th>Duración</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="videos-tbody">
+                                <tr class="text-muted"><td colspan="4" class="text-center">No hay videos agregados aún.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-secondary mt-3 mb-0">
+                        <small>Suma de duraciones: <strong id="sumaDuracion">0m 0s</strong> / Duración total: <strong id="duracionTotalMostrada">0m 0s</strong></small>
+                    </div>
+                    <div id="advertencia" class="alert alert-danger mt-2" style="display:none;">
+                        <i class="fas fa-exclamation-triangle me-1"></i> La suma de las duraciones de los videos supera la duración total del reel.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const containerVideos = document.getElementById('videos-container');
+    const tbody = document.getElementById('videos-tbody');
+    const btnAgregar = document.getElementById('agregarVideoBtn');
+    const duracionTotalInput = document.getElementById('duracionTotal');
+    const sumaSpan = document.getElementById('sumaDuracion');
+    const duracionTotalMostrada = document.getElementById('duracionTotalMostrada');
+    const advertenciaDiv = document.getElementById('advertencia');
+    const reelForm = document.getElementById('reelForm');
+    let videos = [];
+
+    function parsearDuracion(texto) {
+        if (!texto || typeof texto !== 'string') return 0;
+        texto = texto.trim();
+        if (texto.includes(',')) {
+            const partes = texto.split(',');
+            const minutos = parseInt(partes[0]) || 0;
+            const segStr = (partes[1] || '').padEnd(2, '0').slice(0, 2);
+            const segundos = parseInt(segStr) || 0;
+            return minutos * 60 + segundos;
+        }
+        return (parseFloat(texto) || 0) * 60;
+    }
+
+    function formatearDuracion(segundos) {
+        const m = Math.floor(segundos / 60);
+        const s = segundos % 60;
+        if (m === 0) return `${s}s`;
+        if (s === 0) return `${m}m`;
+        return `${m}m ${s}s`;
+    }
+
+    function actualizarTablaYSuma() {
+        tbody.innerHTML = '';
+        if (videos.length === 0) {
+            tbody.innerHTML = '<tr class="text-muted"><td colspan="4" class="text-center">No hay videos agregados aún.</td></tr>';
+            sumaSpan.innerText = '0m 0s';
+            validarDuracion();
+            return;
+        }
+        let suma = 0;
+        videos.forEach((video, index) => {
+            suma += video.duracionSeg;
+            const fila = document.createElement('tr');
+            fila.innerHTML = `<td>${index+1}</td><td>${escapeHtml(video.nombre)}</td><td>${formatearDuracion(video.duracionSeg)}</td><td><button type="button" class="btn btn-sm btn-outline-danger eliminar-video" data-index="${index}"><i class="fas fa-trash"></i></button></td>`;
+            tbody.appendChild(fila);
+        });
+        sumaSpan.innerText = formatearDuracion(suma);
+        validarDuracion();
+    }
+
+    function validarDuracion() {
+        const totalSeg = parsearDuracion(duracionTotalInput.value);
+        duracionTotalMostrada.innerText = totalSeg > 0 ? formatearDuracion(totalSeg) : '0m 0s';
+        const suma = videos.reduce((acc, v) => acc + v.duracionSeg, 0);
+        advertenciaDiv.style.display = (suma > totalSeg && totalSeg > 0) ? 'block' : 'none';
+    }
+
+    function agregarVideo(nombre, duracionTexto) {
+        if (!nombre.trim()) { Swal.fire({ icon: 'warning', title: 'Nombre vacío', text: 'El nombre del video no puede estar vacío' }); return false; }
+        if (!duracionTexto.trim()) { Swal.fire({ icon: 'warning', title: 'Duración vacía', text: 'La duración del video es obligatoria' }); return false; }
+        const segundos = parsearDuracion(duracionTexto);
+        if (segundos <= 0) { Swal.fire({ icon: 'warning', title: 'Duración inválida', text: 'La duración debe ser mayor a cero (ej: 0,20)' }); return false; }
+        videos.push({ nombre: nombre.trim(), duracionSeg: segundos, duracionTexto: duracionTexto });
+        actualizarTablaYSuma();
+        return true;
+    }
+
+    function eliminarVideo(index) { videos.splice(index, 1); actualizarTablaYSuma(); }
+
+    document.getElementById('tablaVideosBody').addEventListener('click', (e) => {
+        const btn = e.target.closest('.eliminar-video');
+        if (btn) eliminarVideo(parseInt(btn.getAttribute('data-index')));
+    });
+
+    btnAgregar.addEventListener('click', () => {
+        const div = document.createElement('div');
+        div.className = 'video-input-group mb-2 p-2 border rounded';
+        div.innerHTML = `<div class="row g-2"><div class="col-6"><input type="text" class="form-control form-control-sm temp-nombre" placeholder="Nombre del video"></div><div class="col-4"><input type="text" class="form-control form-control-sm temp-duracion" placeholder="Duración (ej: 2,30)" value=""></div><div class="col-2 d-flex gap-1"><button type="button" class="btn btn-sm btn-success agregar-temp-video"><i class="fas fa-check"></i></button><button type="button" class="btn btn-sm btn-secondary cancelar-temp-video"><i class="fas fa-times"></i></button></div></div>`;
+        containerVideos.appendChild(div);
+        div.querySelector('.agregar-temp-video').addEventListener('click', () => {
+            if (agregarVideo(div.querySelector('.temp-nombre').value, div.querySelector('.temp-duracion').value)) div.remove();
+        });
+        div.querySelector('.cancelar-temp-video').addEventListener('click', () => div.remove());
+    });
+
+    reelForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (videos.length === 0) { Swal.fire({ icon: 'warning', title: 'Sin videos', text: 'Debes agregar al menos un video.' }); return; }
+        const totalSeg = parsearDuracion(duracionTotalInput.value);
+        if (totalSeg <= 0) { Swal.fire({ icon: 'warning', title: 'Duración inválida', text: 'La duración total debe ser mayor a cero.' }); return; }
+        const suma = videos.reduce((acc, v) => acc + v.duracionSeg, 0);
+        if (suma > totalSeg) { Swal.fire({ icon: 'warning', title: 'Excede duración', text: 'La suma de duraciones excede la duración total.' }); return; }
+        const confirm = await Swal.fire({
+            title: '¿Crear reel?',
+            text: `Crear reel "${document.querySelector('[name="nombre"]').value.trim()}"`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            confirmButtonText: 'Crear',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!confirm.isConfirmed) return;
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden'; hidden.name = 'videos_json';
+        hidden.value = JSON.stringify(videos.map(v => ({ nombre: v.nombre, duracion: v.duracionSeg })));
+        reelForm.appendChild(hidden);
+        HTMLFormElement.prototype.submit.call(reelForm);
+    });
+
+    duracionTotalInput.addEventListener('input', validarDuracion);
+    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+    validarDuracion();
+</script>
+{% endblock %}
