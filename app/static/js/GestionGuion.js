@@ -1,4 +1,8 @@
-import { validarNombre, quitarInvalido } from './validacion.js';
+import { validarNombre, validarTiempoInning, quitarInvalido } from './validacion.js';
+
+function getCSRF() {
+    return document.querySelector('input[name="csrf_token"]').value;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     initCalendar();
@@ -11,15 +15,50 @@ function initGuionForm() {
     const guionForm = document.getElementById('guionForm');
     if (!guionForm) return;
 
-    const nombreInput = document.getElementById('nombre');
+    const esReplicar = document.getElementById('fechas') !== null;
+    const action = esReplicar ? 'replicar' : 'crear';
+
+    const nombreInput = document.getElementById('nombre_base') || document.getElementById('nombre');
     if (nombreInput) {
         nombreInput.addEventListener('input', function() { validarNombre(this); });
         nombreInput.addEventListener('blur', function() { validarNombre(this); });
     }
 
+    const nombreDuplicado = document.getElementById('nombre');
+    if (nombreDuplicado) {
+        nombreDuplicado.addEventListener('blur', async function() {
+            const idInput = document.getElementById('id');
+            if (idInput && idInput.value) return;
+            const nombre = this.value.trim();
+            if (!nombre || !validarNombre(this)) return;
+            const res = await fetch('/guiones/verificar-nombre', {
+                method: 'POST',
+                body: new URLSearchParams({ nombre: nombre, csrf_token: getCSRF() })
+            });
+            const data = await res.json();
+            if (data.error) return;
+            const feedback = this.parentElement.querySelector('.invalid-feedback');
+            if (data.existe) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                if (feedback) feedback.textContent = 'Este nombre ya existe en la base de datos';
+            } else if (this.classList.contains('is-invalid')) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                if (feedback) feedback.textContent = '';
+            }
+        });
+    }
+
+    const tiempoInput = document.getElementById('tiempo_inning');
+    if (tiempoInput) {
+        tiempoInput.addEventListener('input', function() { validarTiempoInning(this); });
+        tiempoInput.addEventListener('blur', function() { validarTiempoInning(this); });
+    }
+
     guionForm.addEventListener('submit', function(e) {
         if (typeof updateDisplay === 'function') updateDisplay();
-        const nombre = document.getElementById('nombre');
+        const nombre = document.getElementById('nombre') || document.getElementById('nombre_base');
         if (nombre && !validarNombre(nombre)) {
             e.preventDefault();
             Swal.fire({
@@ -43,13 +82,13 @@ function initGuionForm() {
 
         e.preventDefault();
         Swal.fire({
-            title: '¿Crear guión?',
-            text: 'Se creará un nuevo guión en el sistema.',
+            title: esReplicar ? '¿Replicar guión?' : '¿Crear guión?',
+            text: esReplicar ? 'Se duplicará el guión en las fechas seleccionadas.' : 'Se creará un nuevo guión en el sistema.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#198754',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, crear',
+            confirmButtonText: esReplicar ? 'Sí, replicar' : 'Sí, crear',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -60,6 +99,9 @@ function initGuionForm() {
 }
 
 function initCalendar() {
+    const modalEl = document.getElementById('calendarModal');
+    if (!modalEl) return;
+
     let selectedDates = [];
     if (typeof window.existingFechas !== 'undefined' && window.existingFechas.length) {
         selectedDates = [...window.existingFechas];
@@ -71,14 +113,11 @@ function initCalendar() {
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     
-    const modalEl = document.getElementById('calendarModal');
-    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+    const modal = new bootstrap.Modal(modalEl);
     
     document.getElementById('openCalendar')?.addEventListener('click', function() {
-        if (modal) {
-            renderCalendar();
-            modal.show();
-        }
+        renderCalendar();
+        modal.show();
     });
     
     function renderCalendar() {
@@ -161,7 +200,7 @@ function initCalendar() {
         renderCalendar();
     });
     
-    modalEl?.addEventListener('hidden.bs.modal', function() {
+    modalEl.addEventListener('hidden.bs.modal', function() {
         updateDisplay();
     });
     
@@ -285,6 +324,7 @@ function initElementoForm() {
             }
 
             e.preventDefault();
+            var submitter = e.submitter;
             const esEditar = window.editingElementId !== undefined && window.editingElementId !== null;
             Swal.fire({
                 title: esEditar ? '¿Guardar cambios?' : '¿Agregar elemento?',
@@ -297,6 +337,13 @@ function initElementoForm() {
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    if (submitter) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = submitter.name;
+                        input.value = submitter.value;
+                        form.appendChild(input);
+                    }
                     HTMLFormElement.prototype.submit.call(form);
                 }
             });

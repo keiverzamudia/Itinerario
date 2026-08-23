@@ -3,14 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 01-06-2026 a las 06:44:04
--- Versión del servidor: 10.4.28-MariaDB
--- Versión de PHP: 8.2.4
+-- Tiempo de generación: 10-07-2026
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -40,15 +37,6 @@ CREATE TABLE `asignaciones_recursos` (
   `notas` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Volcado de datos para la tabla `asignaciones_recursos`
---
-
-INSERT INTO `asignaciones_recursos` (`id`, `recurso_id`, `usuario_id`, `fecha_asignacion`, `fecha_devolucion_esperada`, `fecha_devolucion_real`, `estado_asignacion_id`, `notas`) VALUES
-(1, 1, 4, '2026-05-31 23:31:44', '2026-05-31', '2026-05-31 23:32:05', 2, 'por su uso'),
-(2, 1, 4, '2026-05-31 23:32:21', '2026-05-31', '2026-05-31 23:43:57', 2, 'axa'),
-(3, 1, 18, '2026-06-01 00:04:31', '2026-06-01', NULL, 1, 'ergwr');
-
 -- --------------------------------------------------------
 
 --
@@ -65,17 +53,6 @@ CREATE TABLE `contrato` (
   `tipo` varchar(50) NOT NULL,
   `monto_total` decimal(12,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `contrato`
---
-
-INSERT INTO `contrato` (`id_contrato`, `id_patrocinador`, `fecha_inicio`, `fecha_fin`, `estado`, `estatus`, `tipo`, `monto_total`) VALUES
-(2, 1, '2026-05-01', '2026-05-31', '1', 'Vigente', '2', 150.00),
-(3, 12, '2026-05-06', '2026-05-12', '0', 'Vencido', '2', 350.00),
-(4, 10, '2026-05-13', '2026-05-18', '0', 'Vigente', '3', 450.00),
-(5, 12, '2026-05-24', '2026-05-31', '0', 'Borrador', '3', 600.00),
-(6, 6, '2026-05-31', '2026-08-30', '0', 'Vigente', '2', 150000.00);
 
 -- --------------------------------------------------------
 
@@ -112,14 +89,6 @@ CREATE TABLE `elementos_guion` (
   `estado` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `elementos_guion`
---
-
-INSERT INTO `elementos_guion` (`id`, `guion_id`, `fecha_id`, `tipo`, `hora`, `inning`, `medio_inning`, `contenido`, `duracion_estimada`, `encargado`, `orden`, `creado_en`, `estado`) VALUES
-(11, 6, NULL, 'pregame', '19:46:00', NULL, NULL, 'warnning song', 150, 'Admin', 1, '2026-05-31 19:46:51', 'completado'),
-(12, 6, NULL, 'pregame', '20:11:00', NULL, NULL, 'Salidas de las mascotas', 180, 'Admin', 2, '2026-05-31 20:11:39', 'en_curso');
-
 -- --------------------------------------------------------
 
 --
@@ -133,7 +102,7 @@ CREATE TABLE `estado_asignacion` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Volcado de datos para la tabla `estado_asignacion`
+-- Datos para la tabla `estado_asignacion`
 --
 
 INSERT INTO `estado_asignacion` (`id`, `nombre`, `descripcion`) VALUES
@@ -154,7 +123,7 @@ CREATE TABLE `estado_recurso` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Volcado de datos para la tabla `estado_recurso`
+-- Datos para la tabla `estado_recurso`
 --
 
 INSERT INTO `estado_recurso` (`id`, `nombre`, `descripcion`) VALUES
@@ -163,41 +132,6 @@ INSERT INTO `estado_recurso` (`id`, `nombre`, `descripcion`) VALUES
 (3, 'En Mantenimiento', 'Recurso en proceso de mantenimiento o reparación'),
 (4, 'Dañado', 'Recurso reportado como dañado'),
 (5, 'Baja', 'Recurso dado de baja del inventario');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `eventos`
---
-
-CREATE TABLE `eventos` (
-  `id` int(11) NOT NULL,
-  `titulo` varchar(100) NOT NULL,
-  `descripcion` varchar(500) DEFAULT NULL,
-  `fecha` date NOT NULL,
-  `hora_inicio` time NOT NULL,
-  `hora_fin` time NOT NULL,
-  `duracion_minutos` int(11) DEFAULT NULL,
-  `departamento_id` int(11) NOT NULL,
-  `estado` varchar(20) DEFAULT NULL,
-  `guion` text DEFAULT NULL,
-  `created_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `eventos_sincronizados`
---
-
-CREATE TABLE `eventos_sincronizados` (
-  `id` int(11) NOT NULL,
-  `sincronizacion_id` int(11) NOT NULL,
-  `evento_id` int(11) NOT NULL,
-  `orden` int(11) DEFAULT NULL,
-  `ejecutado` tinyint(1) DEFAULT NULL,
-  `ejecutado_en` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -211,15 +145,10 @@ CREATE TABLE `guiones` (
   `estado` varchar(20) DEFAULT NULL,
   `creado_en` datetime DEFAULT NULL,
   `modificado_en` datetime DEFAULT NULL,
-  `tiempo_inning` int(11) DEFAULT NULL
+  `tiempo_inning` int(11) DEFAULT NULL,
+  `grupo_id` varchar(36) DEFAULT NULL,
+  `status` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `guiones`
---
-
-INSERT INTO `guiones` (`id`, `nombre`, `estado`, `creado_en`, `modificado_en`, `tiempo_inning`) VALUES
-(6, 'Cardenales General', 'en_vivo', '2026-05-31 19:46:35', '2026-06-01 00:16:30', 150);
 
 -- --------------------------------------------------------
 
@@ -233,12 +162,20 @@ CREATE TABLE `guion_fechas` (
   `fecha` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- Volcado de datos para la tabla `guion_fechas`
+-- Estructura de tabla para la tabla `historial_chat`
 --
 
-INSERT INTO `guion_fechas` (`id`, `guion_id`, `fecha`) VALUES
-(7, 6, '2026-05-31');
+CREATE TABLE `historial_chat` (
+  `id` int(11) NOT NULL,
+  `usuario_id` int(11) NOT NULL,
+  `mensaje_usuario` text NOT NULL,
+  `respuesta_ia` text NOT NULL,
+  `contexto` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`contexto`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -254,15 +191,6 @@ CREATE TABLE `historial_mantenimiento` (
   `descripcion` text NOT NULL,
   `creado_en` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `historial_mantenimiento`
---
-
-INSERT INTO `historial_mantenimiento` (`id`, `mantenimiento_id`, `usuario_id`, `accion`, `descripcion`, `creado_en`) VALUES
-(1, 1, 4, 'ingreso', 'Ingreso a mantenimiento. Diagnóstico: problemas de luz focal', '2026-05-22 22:59:58'),
-(6, 4, 4, 'ingreso', 'Ingreso a mantenimiento. Diagnóstico: \r\nNo da imagen', '2026-05-26 04:56:25'),
-(7, 1, 4, 'nota', 'Prueba de bitacora', '2026-05-26 04:56:41');
 
 -- --------------------------------------------------------
 
@@ -282,14 +210,6 @@ CREATE TABLE `mantenimientos` (
   `creado_en` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Volcado de datos para la tabla `mantenimientos`
---
-
-INSERT INTO `mantenimientos` (`id`, `recurso_id`, `usuario_id`, `estado`, `fecha_ingreso`, `fecha_salida`, `diagnostico`, `observaciones`, `creado_en`) VALUES
-(1, 1, 4, 'en_espera', '2026-05-22', NULL, 'problemas de luz focal', '', '2026-05-22 22:59:58'),
-(4, 2, 4, 'en_espera', '2026-05-26', NULL, '\r\nNo da imagen', '', '2026-05-26 04:56:25');
-
 -- --------------------------------------------------------
 
 --
@@ -305,24 +225,10 @@ CREATE TABLE `pagos` (
   `fecha_pago` date NOT NULL,
   `hora_pago` time NOT NULL,
   `registrado_por` int(11) DEFAULT NULL,
-  `Descripción` text DEFAULT NULL,
+  `Descripcion` text DEFAULT NULL,
   `fecha_registro` datetime DEFAULT current_timestamp(),
   `estado` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `pagos`
---
-
-INSERT INTO `pagos` (`id_pago`, `id_contrato`, `monto`, `tipo_pago`, `referencia`, `fecha_pago`, `hora_pago`, `registrado_por`, `Descripción`, `fecha_registro`, `estado`) VALUES
-(1, 1, 50.00, 'Transferencia', '04004004', '2026-05-24', '11:17:00', 3, '', '2026-05-24 15:20:40', 1),
-(2, 2, 10.00, 'Transferencia', '04004004', '2026-05-24', '14:12:00', 3, NULL, '2026-05-24 18:13:57', 1),
-(3, 1, 50.00, 'Transferencia', '55555005', '2026-05-24', '14:23:00', 3, NULL, '2026-05-24 18:24:25', 1),
-(4, 2, 10.00, 'Transferencia', '555005', '2026-05-24', '14:58:00', 3, 'si debe', '2026-05-24 19:00:30', 0),
-(5, 2, 10.00, 'Transferencia', '55555005', '2026-05-17', '15:55:00', 3, '', '2026-05-24 19:59:08', 1),
-(6, 1, 90.00, 'Depósito', '04004', '2026-05-24', '16:57:00', 3, '', '2026-05-24 21:00:38', 1),
-(7, 2, 5.00, 'Cheque', '34433', '2026-05-24', '19:35:00', 3, 'sdqede2d2', '2026-05-24 23:36:45', 1),
-(8, 2, 10.00, 'Transferencia', '555006', '2026-05-26', '21:46:00', 3, 'pago', '2026-05-27 01:48:00', 0);
 
 -- --------------------------------------------------------
 
@@ -338,18 +244,9 @@ CREATE TABLE `patrocinadores` (
   `nombre_contacto` text NOT NULL,
   `telefono` varchar(20) NOT NULL,
   `email` varchar(100) NOT NULL,
-  `estado` int(11) NOT NULL
+  `estado` int(11) NOT NULL,
+  `encargado_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `patrocinadores`
---
-
-INSERT INTO `patrocinadores` (`id_patrocinador`, `nombre_empresa`, `rif`, `tipo_contrato`, `nombre_contacto`, `telefono`, `email`, `estado`) VALUES
-(1, 'Pepsi', 'j-03003', 1, 'Deportivo', '4128492014', 'daniel12@gmail.com', 1),
-(2, 'Maltin polar', 'J-84566', 2, 'torneos', '04227658976', 'genaro23@gmail.com', 1),
-(5, 'keiver C.A', 'V-25469224', 1, 'Plan Keiver', '0412344590', 'keiberzamudia14@gmail.com', 0),
-(6, 'Tubrica C.A', 'J-83736545', 1, 'Tubrica', '0251-2661166', 'dwjdewjd@gmail.com', 1);
 
 -- --------------------------------------------------------
 
@@ -368,33 +265,10 @@ CREATE TABLE `premios` (
   `entregado_por` int(11) DEFAULT NULL,
   `hora_creacion` time NOT NULL,
   `foto` varchar(200) DEFAULT 'default-premio.png',
+  `cantidad` int(11) NOT NULL DEFAULT 1,
+  `cantidad_entregada` int(11) NOT NULL DEFAULT 0,
   `estatus` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `premios`
---
-
-INSERT INTO `premios` (`id`, `id_patrocinador`, `nombre`, `descripcion`, `estado`, `fecha_creacion`, `fecha_entrega`, `entregado_por`, `hora_creacion`, `foto`, `estatus`) VALUES
-(30, 1, 'ewdcdw', 'kkkk', 'entregado', '2026-05-19', '2026-05-19 19:12:43', NULL, '16:02:00', '20260519_150309_premio.png', 0),
-(31, 2, 'Camisas deportivas', 'talla XL para caballeross', 'entregado', '2026-05-19', '2026-05-23 00:12:00', NULL, '16:13:00', '20260519_152537_premio.png', 0),
-(32, 2, 'bolso de comida', '26 productos', 'entregado', '2026-05-19', '2026-05-23 00:25:54', NULL, '15:26:00', '20260519_155614_arichuna.png', 0),
-(33, 2, 'playera', 'sdddw', 'entregado', '2026-05-19', '2026-05-19 19:58:40', NULL, '17:57:00', '20260519_155824_premio.png', 0),
-(34, 2, 'Bebidas Ron', 'El que gane la carrera de la pollada', 'entregado', '2026-05-19', '2026-05-23 00:25:31', NULL, '16:05:00', '20260519_160518_chocolate.png', 0),
-(35, 1, 'keiver Zamudia', 'SII', 'entregado', '2026-05-19', '2026-05-19 23:56:42', NULL, '19:56:00', 'default-premio.png', 0),
-(37, 2, 'Genesis', 'qjsxqjsxjq', 'entregado', '2026-05-20', '2026-05-20 22:21:56', NULL, '18:21:00', '20260520_182145_chocolate.png', 0),
-(39, 2, 'Pley', 'cantidad 6', 'pendiente', '2026-05-21', NULL, NULL, '14:57:00', 'default-premio.png', 1),
-(40, 2, 'mariajose', 'djdjsj', 'pendiente', '2026-05-21', NULL, NULL, '14:58:00', 'default-premio.png', 1),
-(41, 1, 'camisas doradas', 'grande talla s', 'entregado', '2026-05-21', '2026-05-21 18:18:15', NULL, '14:18:00', 'default-premio.png', 0),
-(42, 2, 'Pley', 'eeeeee', 'pendiente', '2026-05-21', NULL, NULL, '20:20:59', 'default-premio.png', 1),
-(43, 2, 'fsvsa', 'ffvv', 'pendiente', '2026-05-22', NULL, NULL, '20:35:13', 'default-premio.png', 1),
-(44, 2, 'aaaa', '', 'pendiente', '2026-05-21', NULL, NULL, '21:05:52', 'default-premio.png', 1),
-(45, 2, 'playsoy', '234', 'entregado', '2026-05-22', '2026-05-22 12:29:26', NULL, '09:27:00', '20260522_082903_cajitafeliz.png', 0),
-(46, 2, 'cajita feliz', 'jdqdnqnjd', 'entregado', '2026-05-22', '2026-05-22 12:32:16', NULL, '08:30:00', '20260522_083122_cajitafeliz.png', 0),
-(47, 2, 'vefe', 'rfr3f4f4', 'entregado', '2026-05-22', '2026-05-22 13:35:06', NULL, '09:34:00', '20260522_093453_cajitafeliz.png', 0),
-(48, 2, 'mariajose', 'nnjhxjaxk', 'pendiente', '2026-04-27', NULL, NULL, '20:46:00', '20260522_204413_cajitafeliz.png', 0),
-(49, 2, 'Play5', 'Ps5 1TB', 'entregado', '2026-05-22', '2026-05-26 04:24:45', NULL, '20:44:00', '20260522_204508_ps5.png', 0),
-(50, 5, 'Programador JR', 'programador junior', 'entregado', '2026-05-31', '2026-06-01 02:21:52', 3, '22:12:00', '20260531_221336_IMG_8395.PNG', 0);
 
 -- --------------------------------------------------------
 
@@ -415,13 +289,6 @@ CREATE TABLE `recursos` (
   `modificado_en` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Volcado de datos para la tabla `recursos`
---
-
-INSERT INTO `recursos` (`id`, `nombre`, `descripcion`, `tipo_id`, `estado_id`, `fecha_compra`, `costo`, `eliminado`, `creado_en`, `modificado_en`) VALUES
-(1, 'Camara', 'camara 16mb', 2, 2, '2026-05-31', 100.00, 0, '2026-05-31 23:31:06', '2026-06-01 00:08:09');
-
 -- --------------------------------------------------------
 
 --
@@ -431,34 +298,11 @@ INSERT INTO `recursos` (`id`, `nombre`, `descripcion`, `tipo_id`, `estado_id`, `
 CREATE TABLE `reels` (
   `id` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
-  `patrocinado` varchar(100) DEFAULT NULL,
+  `id_patrocinador` int(11) DEFAULT NULL,
   `duracion_total` float DEFAULT 0,
   `creado_en` datetime DEFAULT current_timestamp(),
   `modificado_en` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `reels`
---
-
-INSERT INTO `reels` (`id`, `nombre`, `patrocinado`, `duracion_total`, `creado_en`, `modificado_en`) VALUES
-(1, 'Reels 1', 'Maltin polar', 0.25, '2026-06-01 00:20:43', '2026-06-01 00:20:43');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `sincronizaciones`
---
-
-CREATE TABLE `sincronizaciones` (
-  `id` int(11) NOT NULL,
-  `nombre` varchar(100) NOT NULL,
-  `descripcion` varchar(200) DEFAULT NULL,
-  `fecha_sincronizacion` date NOT NULL,
-  `hora_sincronizacion` time NOT NULL,
-  `estado` varchar(20) DEFAULT NULL,
-  `created_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -473,13 +317,6 @@ CREATE TABLE `tareas` (
   `id_usuario_creador` int(11) DEFAULT NULL,
   `Estatus` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `tareas`
---
-
-INSERT INTO `tareas` (`id_tarea`, `Nombre_Tarea`, `Instruccion`, `id_usuario_creador`, `Estatus`) VALUES
-(1, 'revisar la iluminacion', 'revisar la luces ', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -496,13 +333,6 @@ CREATE TABLE `tareas_asignadas` (
   `Estatus` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `tareas_asignadas`
---
-
-INSERT INTO `tareas_asignadas` (`id_asignacion`, `id_tarea`, `id_usuario`, `Estado`, `fecha_asignacion_tarea`, `Estatus`) VALUES
-(1, 1, 3, 'Completada', '2026-06-01 00:23:29', 1);
-
 -- --------------------------------------------------------
 
 --
@@ -516,18 +346,18 @@ CREATE TABLE `tipo_recurso` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Volcado de datos para la tabla `tipo_recurso`
+-- Datos para la tabla `tipo_recurso`
 --
 
 INSERT INTO `tipo_recurso` (`id`, `nombre`, `descripcion`) VALUES
-(1, 'Equipo de PC', 'pcs'),
-(2, 'Equipo de Video', 'Cámaras, proyectores, monitores, etc.'),
-(3, 'Iluminación', 'Luces, reflectores, dimmers, etc.'),
-(4, 'Mobiliario', 'Mesas, sillas, stands, etc.'),
-(5, 'Instrumento', 'Instrumentos musicales'),
-(6, 'Vehículo', 'Vehículos de producción'),
+(1, 'Equipo de PC', 'Computadoras, laptops, tablets'),
+(2, 'Equipo de Video', 'Cámaras, proyectores, monitores, pantallas LED'),
+(3, 'Iluminación', 'Luces, reflectores, dimmers, mesas de luz'),
+(4, 'Mobiliario', 'Mesas, sillas, stands, tarimas'),
+(5, 'Instrumento', 'Instrumentos musicales, amplificadores'),
+(6, 'Vehículo', 'Vehículos de producción y logística'),
 (7, 'Otro', 'Otros tipos de recursos'),
-(8, 'Microfono', 'microfonos');
+(8, 'Microfono', 'Micrófonos inalámbricos y de solapa');
 
 -- --------------------------------------------------------
 
@@ -540,15 +370,220 @@ CREATE TABLE `videos` (
   `nombre` varchar(200) NOT NULL,
   `duracion_segundos` int(11) DEFAULT 0,
   `orden` int(11) DEFAULT NULL,
-  `reel_id` int(11) NOT NULL
+  `reel_id` int(11) NOT NULL,
+  `id_patrocinador` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
 --
--- Volcado de datos para la tabla `videos`
+-- VOLCADO DE DATOS
+-- --------------------------------------------------------
+
+--
+-- Datos para la tabla `departamentos`
 --
 
-INSERT INTO `videos` (`id`, `nombre`, `duracion_segundos`, `orden`, `reel_id`) VALUES
-(1, 'La Pollera', 15, 1, 1);
+INSERT INTO `departamentos` (`id`, `nombre`, `descripcion`, `color`) VALUES
+(1, 'Producción', 'Puesta en escena, guiones y transmisión', '#e74c3c'),
+(2, 'Técnica', 'Soporte técnico, mantenimiento de equipos', '#3498db'),
+(3, 'Comercial', 'Gestión de patrocinadores y contratos', '#2ecc71'),
+(4, 'Administración', 'Gestión general del estadio', '#9b59b6'),
+(5, 'Operaciones', 'Operaciones en vivo y palco', '#f39c12');
+
+--
+-- Datos para la tabla `patrocinadores`
+--
+
+INSERT INTO `patrocinadores` (`id_patrocinador`, `nombre_empresa`, `rif`, `tipo_contrato`, `nombre_contacto`, `telefono`, `email`, `estado`, `encargado_id`) VALUES
+(1, 'Maltin Polar', 'J-00005820-9', 2, 'José Luis Rodríguez', '0212-4003000', 'jrodriguez@polar.com', 1, 3),
+(2, 'Pepsi Venezuela', 'J-00028049-5', 2, 'María Fernanda López', '0212-5002000', 'mlopez@pepsi.com', 1, 4),
+(3, 'Café Flor de Arauca', 'J-40206831-0', 1, 'Carlos Mendoza', '0251-2661100', 'cmendoza@cafeflor.com', 1, 5),
+(4, 'Tubrica C.A', 'J-31028456-7', 1, 'Pedro Jiménez', '0241-8581000', 'p jimenez@tubrica.com', 1, 6),
+(5, 'Banesco Banco Universal', 'J-00078321-3', 2, 'Ana Sofía Pérez', '0212-2064646', 'aperez@banesco.com', 1, 3),
+(6, 'Movilnet C.A', 'J-30472189-0', 1, 'Roberto Díaz', '0212-3001000', 'rdiaz@movilnet.com', 1, 4),
+(7, 'Alimentos Mary', 'J-29587314-6', 1, 'Luis Hernández', '0241-8782000', 'lhernandez@alimentosmary.com', 1, 5),
+(8, 'Farmatodo C.A', 'J-00032815-8', 2, 'Gabriela Torres', '0212-7003000', 'gtorres@farmatodo.com', 1, 6),
+(9, 'Cerveza Regional', 'J-40157623-8', 1, 'Manuel Castillo', '0261-7984000', 'mcastillo@regional.com', 1, 3);
+
+--
+-- Datos para la tabla `contrato`
+--
+
+INSERT INTO `contrato` (`id_contrato`, `id_patrocinador`, `fecha_inicio`, `fecha_fin`, `estado`, `estatus`, `tipo`, `monto_total`) VALUES
+(1, 1, '2026-04-01', '2026-10-31', '1', 'Vigente', '2', 85000.00),
+(2, 2, '2026-05-01', '2026-09-30', '1', 'Vigente', '2', 62000.00),
+(3, 3, '2026-06-01', '2026-08-31', '1', 'Vigente', '1', 25000.00),
+(4, 4, '2026-04-15', '2026-07-15', '0', 'Vencido', '1', 30000.00),
+(5, 5, '2026-03-01', '2026-12-31', '1', 'Vigente', '3', 120000.00),
+(6, 6, '2026-06-01', '2026-09-30', '1', 'Vigente', '1', 18000.00),
+(7, 7, '2026-07-01', '2026-09-30', '1', 'Vigente', '1', 15000.00),
+(8, 8, '2026-04-01', '2026-11-30', '1', 'Vigente', '2', 45000.00),
+(9, 9, '2026-05-15', '2026-08-15', '1', 'Vigente', '1', 22000.00);
+
+--
+-- Datos para la tabla `recursos`
+--
+
+INSERT INTO `recursos` (`id`, `nombre`, `descripcion`, `tipo_id`, `estado_id`, `fecha_compra`, `costo`, `eliminado`) VALUES
+(1, 'Sony PXW-Z150', 'Cámara 4K profesional para transmisión en vivo', 2, 1, '2025-03-15', 4500.00, 0),
+(2, 'Pantalla LED 55"', 'Pantalla LED para sala de control y palco', 2, 1, '2025-06-20', 3200.00, 0),
+(3, 'Yamaha TF3', 'Mezcladora digital 24 canales para audio en vivo', 8, 1, '2024-11-10', 5800.00, 0),
+(4, 'Shure SM58 x4', 'Micrófonos dinámicos inalámbricos para presentadores', 8, 1, '2025-08-05', 1200.00, 0),
+(5, 'Dell XPS 15', 'Laptop para control de guiones y presentaciones', 1, 1, '2025-09-01', 2100.00, 0),
+(6, 'Epson EB-L615U', 'Proyector láser 6000 lúmenes para pantallas del estadio', 2, 1, '2025-01-20', 3800.00, 0),
+(7, 'Mesa de iluminación DMX', 'Controlador de luces para escenario principal', 3, 1, '2024-12-05', 2600.00, 0),
+(8, 'Sillas plegables x20', 'Set de sillas para área de producción', 4, 1, '2025-04-10', 400.00, 0),
+(9, 'Bafle JBL PRX812W', 'Bafle inalámbrico 12" para zona de transmisión', 7, 1, '2025-07-15', 1800.00, 0),
+(10, 'iPad Pro 12.9"', 'Tablet para control remoto de presentaciones', 1, 1, '2025-10-01', 1100.00, 0);
+
+--
+-- Datos para la tabla `tipo_recurso` (se insertan arriba)
+
+--
+-- Datos para la tabla `premios`
+--
+
+INSERT INTO `premios` (`id`, `id_patrocinador`, `nombre`, `descripcion`, `estado`, `fecha_creacion`, `fecha_entrega`, `entregado_por`, `hora_creacion`, `foto`, `cantidad`, `cantidad_entregada`, `estatus`) VALUES
+(1, 1, '6 Pack Maltin Polar', 'Caja de 6 latas de Maltin Polar 350ml', 'entregado', '2026-06-15', '2026-06-18 19:30:00', 3, '10:00:00', 'default-premio.png', 50, 12, 0),
+(2, 2, 'Pepsi Cola 2L x3', 'Tres botellas de Pepsi Cola 2 litros', 'entregado', '2026-06-15', '2026-06-18 20:15:00', 4, '10:30:00', 'default-premio.png', 30, 8, 0),
+(3, 5, 'Tarjeta Banesco $50', 'Tarjeta de regalo Banesco por 50$', 'pendiente', '2026-07-01', NULL, NULL, '09:00:00', 'default-premio.png', 10, 0, 1),
+(4, 3, 'Café Flor de Arauca 250g', 'Paquete de café premium tostado oscuro', 'entregado', '2026-06-20', '2026-06-22 18:45:00', 5, '11:00:00', 'default-premio.png', 20, 5, 0),
+(5, 8, 'Kit Farmatodo', 'Kit de productos de higiene personal', 'pendiente', '2026-07-05', NULL, NULL, '14:00:00', 'default-premio.png', 40, 0, 1),
+(6, 6, 'Camiseta Movilnet', 'Camiseta oficial Movilnet edición beisbol', 'entregado', '2026-06-10', '2026-06-12 19:00:00', 3, '08:30:00', 'default-premio.png', 100, 25, 0),
+(7, 4, 'Combo Tubrica', 'Kit de herramientas básicas Tubrica', 'pendiente', '2026-07-08', NULL, NULL, '15:30:00', 'default-premio.png', 15, 0, 1),
+(8, 9, 'Cerveza Regional 6 Pack', 'Caja de 6 latas de Cerveza Regional', 'pendiente', '2026-07-10', NULL, NULL, '12:00:00', 'default-premio.png', 25, 0, 1),
+(9, 1, 'Polar Pina 1L x2', 'Dos botellas de Polar Pina 1 litro', 'entregado', '2026-06-25', '2026-06-28 20:00:00', 4, '09:30:00', 'default-premio.png', 40, 15, 0),
+(10, 7, 'Caja Alimentos Mary', 'Caja de snacks y dulces variados', 'pendiente', '2026-07-12', NULL, NULL, '16:00:00', 'default-premio.png', 30, 0, 1);
+
+--
+-- Datos para la tabla `guiones`
+--
+
+INSERT INTO `guiones` (`id`, `nombre`, `estado`, `creado_en`, `modificado_en`, `tiempo_inning`, `grupo_id`, `status`) VALUES
+(1, 'Cardenales vs Leones - 2026-07-10', 'publicado', '2026-07-08 09:00:00', '2026-07-09 14:30:00', 120, NULL, 1),
+(2, 'Cardenales vs Tiburones - 2026-07-12', 'borrador', '2026-07-10 10:00:00', '2026-07-10 10:00:00', 120, NULL, 1),
+(3, 'Cardenales vs Navegantes - 2026-07-15', 'borrador', '2026-07-10 11:00:00', '2026-07-10 11:00:00', 120, NULL, 1),
+(4, 'Cardenales vs Tigres - 2026-07-18', 'borrador', '2026-07-10 12:00:00', '2026-07-10 12:00:00', 120, NULL, 1),
+(5, 'Cardenales vs Águilas - 2026-07-20', 'borrador', '2026-07-10 13:00:00', '2026-07-10 13:00:00', 120, NULL, 1);
+
+--
+-- Datos para la tabla `guion_fechas`
+--
+
+INSERT INTO `guion_fechas` (`id`, `guion_id`, `fecha`) VALUES
+(1, 1, '2026-07-10'),
+(2, 2, '2026-07-12'),
+(3, 3, '2026-07-15'),
+(4, 4, '2026-07-18'),
+(5, 5, '2026-07-20');
+
+--
+-- Datos para la tabla `elementos_guion`
+--
+
+INSERT INTO `elementos_guion` (`id`, `guion_id`, `fecha_id`, `tipo`, `hora`, `inning`, `medio_inning`, `contenido`, `duracion_estimada`, `encargado`, `orden`, `creado_en`, `estado`) VALUES
+-- Guion 1: Cardenales vs Leones
+(1, 1, 1, 'pregame', '17:00:00', NULL, NULL, 'Apertura de puertas y bienvenida', 300, 'keiver', 1, '2026-07-08 09:05:00', 'pendiente'),
+(2, 1, 1, 'pregame', '17:30:00', NULL, NULL, 'Presentación de alineaciones por pantallas', 180, 'Genesis', 2, '2026-07-08 09:06:00', 'pendiente'),
+(3, 1, 1, 'pregame', '18:00:00', NULL, NULL, 'Ceremonia de lanzamiento inaugural', 240, 'keiver', 3, '2026-07-08 09:07:00', 'pendiente'),
+(4, 1, 1, 'pregame', '18:15:00', NULL, NULL, 'Himno Nacional - Orquesta del Estado', 180, 'Genesis', 4, '2026-07-08 09:08:00', 'pendiente'),
+(5, 1, 1, 'pregame', '18:20:00', NULL, NULL, 'Video bienvenida patrocinadores', 60, 'keiver', 5, '2026-07-08 09:09:00', 'pendiente'),
+(6, 1, 1, 'game', NULL, 1, 'baja', 'Publicidad Maltin Polar - Jumbotron', 30, 'keiver', 1, '2026-07-08 09:10:00', NULL),
+(7, 1, 1, 'game', NULL, 1, 'alta', 'Publicidad Pepsi - Bafles del estadio', 30, 'Genesis', 2, '2026-07-08 09:11:00', NULL),
+(8, 1, 1, 'game', NULL, 2, 'baja', 'Concurso Maltin Polar - Lanzamiento de pelota', 120, 'keiver', 3, '2026-07-08 09:12:00', NULL),
+(9, 1, 1, 'game', NULL, 3, 'alta', 'Publicidad Banesco - Finanzas personales', 30, 'Genesis', 4, '2026-07-08 09:13:00', NULL),
+(10, 1, 1, 'game', NULL, 4, 'baja', 'Reels Café Flor de Arauca', 25, 'keiver', 5, '2026-07-08 09:14:00', NULL),
+(11, 1, 1, 'game', NULL, 5, 'alta', 'Publicidad Movilnet - Plan datos beisbol', 30, 'Genesis', 6, '2026-07-08 09:15:00', NULL),
+(12, 1, 1, 'game', NULL, 6, 'baja', 'Ceremonia de premiación fan del juego', 180, 'keiver', 7, '2026-07-08 09:16:00', NULL),
+(13, 1, 1, 'game', NULL, 7, 'alta', 'Publicidad Farmatodo - Salud y bienestar', 30, 'Genesis', 8, '2026-07-08 09:17:00', NULL),
+(14, 1, 1, 'game', NULL, 8, 'baja', 'Reels Cerveza Regional', 25, 'keiver', 9, '2026-07-08 09:18:00', NULL),
+(15, 1, 1, 'postgame', NULL, NULL, NULL, 'Entrega de premios a ganadores', 300, 'keiver', 1, '2026-07-08 09:19:00', NULL),
+(16, 1, 1, 'postgame', NULL, NULL, NULL, 'Entrevistas post-juego y agradecimientos', 600, 'Genesis', 2, '2026-07-08 09:20:00', NULL),
+-- Guion 2: Cardenales vs Tiburones
+(17, 2, 2, 'pregame', '17:00:00', NULL, NULL, 'Apertura de puertas', 300, 'keiver', 1, '2026-07-10 10:05:00', 'pendiente'),
+(18, 2, 2, 'pregame', '17:30:00', NULL, NULL, 'Presentación de alineaciones', 180, 'Genesis', 2, '2026-07-10 10:06:00', 'pendiente'),
+(19, 2, 2, 'pregame', '18:00:00', NULL, NULL, 'Ceremonia de lanzamiento inaugural', 240, 'keiver', 3, '2026-07-10 10:07:00', 'pendiente'),
+(20, 2, 2, 'pregame', '18:15:00', NULL, NULL, 'Himno Nacional', 180, 'Genesis', 4, '2026-07-10 10:08:00', 'pendiente'),
+(21, 2, 2, 'game', NULL, 1, 'baja', 'Publicidad Maltin Polar', 30, 'keiver', 1, '2026-07-10 10:10:00', NULL),
+(22, 2, 2, 'game', NULL, 2, 'baja', 'Concurso Alimentos Mary - Sabor del juego', 120, 'keiver', 2, '2026-07-10 10:11:00', NULL),
+(23, 2, 2, 'game', NULL, 3, 'alta', 'Publicidad Tubrica', 30, 'Genesis', 3, '2026-07-10 10:12:00', NULL),
+(24, 2, 2, 'game', NULL, 5, 'baja', 'Reels Banesco', 25, 'keiver', 4, '2026-07-10 10:13:00', NULL),
+(25, 2, 2, 'game', NULL, 7, 'alta', 'Publicidad Pepsi', 30, 'Genesis', 5, '2026-07-10 10:14:00', NULL),
+-- Guion 3: Cardenales vs Navegantes
+(26, 3, 3, 'pregame', '18:00:00', NULL, NULL, 'Apertura de puertas y animación', 300, 'keiver', 1, '2026-07-10 11:05:00', 'pendiente'),
+(27, 3, 3, 'pregame', '18:30:00', NULL, NULL, 'Himno Nacional y presentación', 240, 'Genesis', 2, '2026-07-10 11:06:00', 'pendiente'),
+(28, 3, 3, 'game', NULL, 1, 'baja', 'Publicidad Movilnet', 30, 'keiver', 1, '2026-07-10 11:08:00', NULL),
+(29, 3, 3, 'game', NULL, 3, 'baja', 'Concurso Café Flor de Arauca', 120, 'keiver', 2, '2026-07-10 11:09:00', NULL),
+(30, 3, 3, 'game', NULL, 5, 'alta', 'Publicidad Farmatodo', 30, 'Genesis', 3, '2026-07-10 11:10:00', NULL),
+(31, 3, 3, 'game', NULL, 7, 'baja', 'Reels Cerveza Regional', 25, 'keiver', 4, '2026-07-10 11:11:00', NULL);
+
+--
+-- Datos para la tabla `pagos`
+--
+
+INSERT INTO `pagos` (`id_pago`, `id_contrato`, `monto`, `tipo_pago`, `referencia`, `fecha_pago`, `hora_pago`, `registrado_por`, `Descripcion`, `fecha_registro`, `estado`) VALUES
+(1, 1, 21250.00, 'Transferencia', 'TRF-2026-001', '2026-04-05', '10:00:00', 3, 'Pago inicial contrato Maltin Polar - 25%', '2026-04-05 10:05:00', 1),
+(2, 1, 21250.00, 'Transferencia', 'TRF-2026-002', '2026-06-05', '10:00:00', 3, 'Segundo abono contrato Maltin Polar - 25%', '2026-06-05 10:05:00', 1),
+(3, 2, 15500.00, 'Transferencia', 'TRF-2026-003', '2026-05-10', '11:00:00', 4, 'Pago inicial contrato Pepsi - 25%', '2026-05-10 11:05:00', 1),
+(4, 5, 30000.00, 'Transferencia', 'TRF-2026-004', '2026-03-15', '09:30:00', 3, 'Pago inicial contrato Banesco - 25%', '2026-03-15 09:35:00', 1),
+(5, 5, 30000.00, 'Transferencia', 'TRF-2026-005', '2026-06-15', '09:30:00', 3, 'Segundo abono contrato Banesco - 25%', '2026-06-15 09:35:00', 1),
+(6, 8, 11250.00, 'Efectivo', 'EFE-2026-001', '2026-04-10', '14:00:00', 5, 'Pago inicial contrato Farmatodo - 25%', '2026-04-10 14:05:00', 1),
+(7, 3, 6250.00, 'Efectivo', 'EFE-2026-002', '2026-06-10', '15:00:00', 5, 'Pago inicial contrato Café Flor - 50%', '2026-06-10 15:05:00', 1),
+(8, 9, 5500.00, 'Transferencia', 'TRF-2026-006', '2026-05-20', '16:00:00', 6, 'Pago inicial contrato Cerveza Regional - 25%', '2026-05-20 16:05:00', 1);
+
+--
+-- Datos para la tabla `reels`
+--
+
+INSERT INTO `reels` (`id`, `nombre`, `id_patrocinador`, `duracion_total`, `creado_en`, `modificado_en`) VALUES
+(1, 'Maltin Polar - Edición Verano', 1, 45.0, '2026-06-01 10:00:00', '2026-06-01 10:00:00'),
+(2, 'Pepsi - Noche de Beisbol', 2, 30.0, '2026-06-05 11:00:00', '2026-06-05 11:00:00'),
+(3, 'Banesco - Finanzas Familiares', 5, 35.0, '2026-06-10 09:00:00', '2026-06-10 09:00:00'),
+(4, 'Café Flor de Arauca - Momento Café', 3, 25.0, '2026-06-15 14:00:00', '2026-06-15 14:00:00'),
+(5, 'Movilnet - Conectados al Juego', 6, 20.0, '2026-06-20 10:00:00', '2026-06-20 10:00:00');
+
+--
+-- Datos para la tabla `videos`
+--
+
+INSERT INTO `videos` (`id`, `nombre`, `duracion_segundos`, `orden`, `reel_id`, `id_patrocinador`) VALUES
+(1, 'Maltin Polar - Spot 15s', 15, 1, 1, 1),
+(2, 'Maltin Polar - Behind the scenes', 15, 2, 1, 1),
+(3, 'Maltin Polar - Testimonios fans', 15, 3, 1, 1),
+(4, 'Pepsi - Spot principal', 15, 1, 2, 2),
+(5, 'Pepsi - Momento refresh', 15, 2, 2, 2),
+(6, 'Banesco - Consejos financieros', 20, 1, 3, 5),
+(7, 'Banesco - Beneficios tarjeta', 15, 2, 3, 5),
+(8, 'Café Flor - Tueste artesanal', 15, 1, 4, 3),
+(9, 'Café Flor - Recetas', 10, 2, 4, 3),
+(10, 'Movilnet - Plan beisbol', 10, 1, 5, 6),
+(11, 'Movilnet - Conectividad', 10, 2, 5, 6);
+
+--
+-- Datos para la tabla `tareas`
+--
+
+INSERT INTO `tareas` (`id_tarea`, `Nombre_Tarea`, `Instruccion`, `id_usuario_creador`, `Estatus`) VALUES
+(1, 'Verificar equipo de transmisión', 'Revisar estado de cámaras, mezcladora y pantallas antes del juego', 3, 1),
+(2, 'Calibrar sonido del estadio', 'Ajustar niveles de audio en bafles principales y zonas secundarias', 3, 1),
+(3, 'Preparar contenido Jumbotron', 'Cargar videos de patrocinadores y spots en el sistema de pantallas', 4, 1),
+(4, 'Revisar iluminación del campo', 'Verificar focos principales, focos de juego y luz de emergencia', 5, 1),
+(5, 'Entregar kits de premios', 'Preparar y entregar premios a zona de animación 2 horas antes del juego', 6, 1),
+(6, 'Coordinar llegada de patrocinadores', 'Confirmar asistencia y asignar accesos a invitados especiales', 3, 1);
+
+--
+-- Datos para la tabla `tareas_asignadas`
+--
+
+INSERT INTO `tareas_asignadas` (`id_asignacion`, `id_tarea`, `id_usuario`, `Estado`, `fecha_asignacion_tarea`, `Estatus`) VALUES
+(1, 1, 4, 'Completada', '2026-07-09 14:00:00', 1),
+(2, 2, 5, 'Completada', '2026-07-09 14:30:00', 1),
+(3, 3, 4, 'En Progreso', '2026-07-09 15:00:00', 1),
+(4, 4, 6, 'Pendiente', '2026-07-10 08:00:00', 1),
+(5, 5, 5, 'Pendiente', '2026-07-10 09:00:00', 1),
+(6, 6, 3, 'Pendiente', '2026-07-10 10:00:00', 1);
+
+-- --------------------------------------------------------
 
 --
 -- Índices para tablas volcadas
@@ -598,25 +633,11 @@ ALTER TABLE `estado_recurso`
   ADD UNIQUE KEY `nombre` (`nombre`);
 
 --
--- Indices de la tabla `eventos`
---
-ALTER TABLE `eventos`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `departamento_id` (`departamento_id`);
-
---
--- Indices de la tabla `eventos_sincronizados`
---
-ALTER TABLE `eventos_sincronizados`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `sincronizacion_id` (`sincronizacion_id`),
-  ADD KEY `evento_id` (`evento_id`);
-
---
 -- Indices de la tabla `guiones`
 --
 ALTER TABLE `guiones`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_grupo_id` (`grupo_id`);
 
 --
 -- Indices de la tabla `guion_fechas`
@@ -624,6 +645,12 @@ ALTER TABLE `guiones`
 ALTER TABLE `guion_fechas`
   ADD PRIMARY KEY (`id`),
   ADD KEY `guion_id` (`guion_id`);
+
+--
+-- Indices de la tabla `historial_chat`
+--
+ALTER TABLE `historial_chat`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `historial_mantenimiento`
@@ -674,13 +701,8 @@ ALTER TABLE `recursos`
 -- Indices de la tabla `reels`
 --
 ALTER TABLE `reels`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indices de la tabla `sincronizaciones`
---
-ALTER TABLE `sincronizaciones`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_patrocinador` (`id_patrocinador`);
 
 --
 -- Indices de la tabla `tareas`
@@ -717,25 +739,25 @@ ALTER TABLE `videos`
 -- AUTO_INCREMENT de la tabla `asignaciones_recursos`
 --
 ALTER TABLE `asignaciones_recursos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `contrato`
 --
 ALTER TABLE `contrato`
-  MODIFY `id_contrato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_contrato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `departamentos`
 --
 ALTER TABLE `departamentos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `elementos_guion`
 --
 ALTER TABLE `elementos_guion`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de la tabla `estado_asignacion`
@@ -750,40 +772,34 @@ ALTER TABLE `estado_recurso`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT de la tabla `eventos`
---
-ALTER TABLE `eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `eventos_sincronizados`
---
-ALTER TABLE `eventos_sincronizados`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de la tabla `guiones`
 --
 ALTER TABLE `guiones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `guion_fechas`
 --
 ALTER TABLE `guion_fechas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT de la tabla `historial_chat`
+--
+ALTER TABLE `historial_chat`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `historial_mantenimiento`
 --
 ALTER TABLE `historial_mantenimiento`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `mantenimientos`
 --
 ALTER TABLE `mantenimientos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos`
@@ -795,43 +811,37 @@ ALTER TABLE `pagos`
 -- AUTO_INCREMENT de la tabla `patrocinadores`
 --
 ALTER TABLE `patrocinadores`
-  MODIFY `id_patrocinador` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_patrocinador` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `premios`
 --
 ALTER TABLE `premios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `recursos`
 --
 ALTER TABLE `recursos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `reels`
 --
 ALTER TABLE `reels`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `sincronizaciones`
---
-ALTER TABLE `sincronizaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `tareas`
 --
 ALTER TABLE `tareas`
-  MODIFY `id_tarea` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_tarea` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `tareas_asignadas`
 --
 ALTER TABLE `tareas_asignadas`
-  MODIFY `id_asignacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_asignacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `tipo_recurso`
@@ -843,7 +853,7 @@ ALTER TABLE `tipo_recurso`
 -- AUTO_INCREMENT de la tabla `videos`
 --
 ALTER TABLE `videos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- Restricciones para tablas volcadas
@@ -857,24 +867,17 @@ ALTER TABLE `asignaciones_recursos`
   ADD CONSTRAINT `fk_asignaciones_recurso` FOREIGN KEY (`recurso_id`) REFERENCES `recursos` (`id`);
 
 --
+-- Filtros para la tabla `contrato`
+--
+ALTER TABLE `contrato`
+  ADD CONSTRAINT `contrato_ibfk_1` FOREIGN KEY (`id_patrocinador`) REFERENCES `patrocinadores` (`id_patrocinador`);
+
+--
 -- Filtros para la tabla `elementos_guion`
 --
 ALTER TABLE `elementos_guion`
   ADD CONSTRAINT `elementos_guion_ibfk_1` FOREIGN KEY (`guion_id`) REFERENCES `guiones` (`id`),
   ADD CONSTRAINT `elementos_guion_ibfk_2` FOREIGN KEY (`fecha_id`) REFERENCES `guion_fechas` (`id`);
-
---
--- Filtros para la tabla `eventos`
---
-ALTER TABLE `eventos`
-  ADD CONSTRAINT `eventos_ibfk_1` FOREIGN KEY (`departamento_id`) REFERENCES `departamentos` (`id`);
-
---
--- Filtros para la tabla `eventos_sincronizados`
---
-ALTER TABLE `eventos_sincronizados`
-  ADD CONSTRAINT `eventos_sincronizados_ibfk_1` FOREIGN KEY (`sincronizacion_id`) REFERENCES `sincronizaciones` (`id`),
-  ADD CONSTRAINT `eventos_sincronizados_ibfk_2` FOREIGN KEY (`evento_id`) REFERENCES `eventos` (`id`);
 
 --
 -- Filtros para la tabla `guion_fechas`
@@ -889,11 +892,29 @@ ALTER TABLE `historial_mantenimiento`
   ADD CONSTRAINT `historial_mantenimiento_ibfk_1` FOREIGN KEY (`mantenimiento_id`) REFERENCES `mantenimientos` (`id`) ON DELETE CASCADE;
 
 --
+-- Filtros para la tabla `pagos`
+--
+ALTER TABLE `pagos`
+  ADD CONSTRAINT `pagos_ibfk_1` FOREIGN KEY (`id_contrato`) REFERENCES `contrato` (`id_contrato`);
+
+--
+-- Filtros para la tabla `premios`
+--
+ALTER TABLE `premios`
+  ADD CONSTRAINT `premios_ibfk_1` FOREIGN KEY (`id_patrocinador`) REFERENCES `patrocinadores` (`id_patrocinador`);
+
+--
 -- Filtros para la tabla `recursos`
 --
 ALTER TABLE `recursos`
   ADD CONSTRAINT `fk_recursos_estado` FOREIGN KEY (`estado_id`) REFERENCES `estado_recurso` (`id`),
   ADD CONSTRAINT `fk_recursos_tipo` FOREIGN KEY (`tipo_id`) REFERENCES `tipo_recurso` (`id`);
+
+--
+-- Filtros para la tabla `reels`
+--
+ALTER TABLE `reels`
+  ADD CONSTRAINT `reels_ibfk_1` FOREIGN KEY (`id_patrocinador`) REFERENCES `patrocinadores` (`id_patrocinador`);
 
 --
 -- Filtros para la tabla `tareas_asignadas`

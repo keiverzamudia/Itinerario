@@ -37,7 +37,7 @@ function validarCampo(campo, condicion, mensaje) {
 
 export function validarNombre(campo) {
     const valido = regExp.nombre.test(campo.value.trim());
-    validarCampo(campo, valido, 'El nombre debe tener entre 2 y 100 caracteres');
+    validarCampo(campo, valido, 'El nombre debe tener entre 2 y 50 caracteres');
     return valido;
 }
 
@@ -49,19 +49,34 @@ export function validarEmail(campo) {
 
 export function validarPassword(campo) {
     const valido = regExp.password.test(campo.value);
-    validarCampo(campo, valido, 'La contraseña debe tener al menos 6 caracteres');
+    validarCampo(campo, valido, 'La contraseña debe tener entre 8 y 30 caracteres');
     return valido;
 }
 
 export function validarCedula(campo) {
     const valido = regExp.cedula.test(campo.value.trim());
-    validarCampo(campo, valido, 'La cédula debe tener entre 5 y 15 dígitos');
+    validarCampo(campo, valido, 'La cédula debe tener entre 6 y 10 numeros');
     return valido;
 }
 
 export function validarTelefono(campo) {
-    const valido = campo.value.trim() === '' || regExp.telefono.test(campo.value.trim());
-    validarCampo(campo, valido, 'Ingresa un teléfono válido (ej: 0412-1234567, +584121234567)');
+    const prefix = document.getElementById('telefono_prefix');
+    const full = (prefix ? prefix.value : '+58') + (campo.value || '').trim();
+    if (full === '+58') {
+        limpiarInvalido(campo);
+        return true;
+    }
+    const valido = regExp.telefono.test(full);
+    const feedback = campo.closest('.col-md-6')?.querySelector('.invalid-feedback');
+    if (valido) {
+        campo.classList.remove('is-invalid');
+        campo.classList.add('is-valid');
+        if (feedback) feedback.textContent = '';
+    } else {
+        campo.classList.add('is-invalid');
+        campo.classList.remove('is-valid');
+        if (feedback) feedback.textContent = 'Ingresa un teléfono válido';
+    }
     return valido;
 }
 
@@ -95,6 +110,12 @@ export function validarTexto(campo) {
     return valido;
 }
 
+export function validarTextoMax(campo, maximo) {
+    const valido = campo.value.trim().length >= 3 && campo.value.trim().length <= maximo;
+    validarCampo(campo, valido, 'Debe tener entre 3 y ' + maximo + ' caracteres');
+    return valido;
+}
+
 export function validarTextoLargo(campo) {
     const valido = campo.value.trim().length >= 10;
     validarCampo(campo, valido, 'Debe tener al menos 10 caracteres');
@@ -103,7 +124,7 @@ export function validarTextoLargo(campo) {
 
 export function validarDescripcion(campo) {
     const valido = regExp.descripcion.test(campo.value.trim());
-    validarCampo(campo, valido, 'La descripción contiene caracteres no válidos');
+    validarCampo(campo, valido, 'La descripción debe tener entre 5 y 500 caracteres');
     return valido;
 }
 
@@ -121,7 +142,7 @@ export function validarCosto(campo) {
 
 export function validarCantidad(campo) {
     const valido = regExp.cantidad.test(campo.value);
-    validarCampo(campo, valido, 'Ingresa una cantidad válida');
+    validarCampo(campo, valido, 'Ingresa una cantidad válida (máx 9 dígitos)');
     return valido;
 }
 
@@ -131,10 +152,26 @@ export function validarCodigo(campo) {
     return valido;
 }
 
+export function validarTiempoInning(campo) {
+    const val = campo.value.trim();
+    if (val === '') {
+        limpiarInvalido(campo);
+        return true;
+    }
+    const valido = /^\d{1,2}(,\d{1,2})?$/.test(val);
+    validarCampo(campo, valido, 'Formato: min,seg (ej: 3,30 o 5)');
+    return valido;
+}
+
 export function validarRazonSocial(campo) {
     const valido = regExp.razonSocial.test(campo.value.trim());
     validarCampo(campo, valido, 'Ingresa una razón social válida');
     return valido;
+}
+
+export function validarFechaOpcional(campo) {
+    if (!campo.value) return true;
+    return validarFecha(campo);
 }
 
 export function validarFechaFin(fechaFin, fechaInicio) {
@@ -150,6 +187,12 @@ export function validarFechaFin(fechaFin, fechaInicio) {
     }
     validarCampo(fechaFin, true, '');
     return true;
+}
+
+export function validarTextoCaptcha(campo) {
+    const valido = campo.value.trim().length === 4;
+    validarCampo(campo, valido, 'Ingresa el codigo de la imagen');
+    return valido;
 }
 
 export function validarConfirmPassword(password, confirm) {

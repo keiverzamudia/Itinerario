@@ -1,44 +1,5 @@
 /* CSS MANTENIMIENTO — solo estilos específicos del módulo */
 
-.btn-ingresar {
-    background: linear-gradient(135deg, #f59e0b, #fbbf24);
-    color: white !important;
-    padding: 8px 16px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    display: inline-block;
-    transition: 0.2s;
-    border: none;
-}
-.btn-ingresar:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-.btn-reparar {
-    background: linear-gradient(135deg, #10b981, #34d399);
-    color: white !important;
-    padding: 8px 16px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    display: inline-block;
-    transition: 0.2s;
-    border: none;
-}
-.btn-reparar:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-.btn-baja {
-    background: linear-gradient(135deg, #6c757d, #adb5bd);
-    color: white !important;
-    padding: 8px 16px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    display: inline-block;
-    transition: 0.2s;
-    border: none;
-}
-.btn-baja:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
 .historial-timeline {
     position: relative;
     padding-left: 30px;
@@ -64,12 +25,12 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #007bff;
+    background: #6c757d;
     border: 2px solid white;
-    box-shadow: 0 0 0 2px #007bff;
+    box-shadow: 0 0 0 2px #6c757d;
 }
 .historial-item.nota::before { background: #ffc107; box-shadow: 0 0 0 2px #ffc107; }
-.historial-item.ingreso::before { background: #17a2b8; box-shadow: 0 0 0 2px #17a2b8; }
+.historial-item.ingreso::before { background: #0d6efd; box-shadow: 0 0 0 2px #0d6efd; }
 .historial-item.reparar::before { background: #28a745; box-shadow: 0 0 0 2px #28a745; }
 .historial-item.baja::before { background: #6c757d; box-shadow: 0 0 0 2px #6c757d; }
 .historial-item.finalizar::before { background: #6c757d; box-shadow: 0 0 0 2px #6c757d; }

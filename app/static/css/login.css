@@ -248,6 +248,120 @@
   color: #94a3b8;
 }
 
+/* =============================================
+   PASSWORD TOGGLE (EYE)
+   ============================================= */
+.password-toggle {
+  position: relative;
+}
+
+.password-toggle .form-control {
+  padding-right: 2rem;
+}
+
+.password-eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  width: 1em;
+  height: 1em;
+}
+
+.password-eye:hover {
+  color: #cbd5e1;
+}
+
+.password-eye:active {
+  color: #94a3b8;
+}
+
+/* =============================================
+   CAPTCHA REFRESH BUTTON
+   ============================================= */
+.captcha-refresh {
+  border: none;
+  background: #f1f5f9;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.captcha-refresh:hover {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.captcha-refresh:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* =============================================
+   TILE CAPTCHA
+   ============================================= */
+.captcha-tiles-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.captcha-tiles-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.captcha-tile {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+
+.captcha-input-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.captcha-input {
+  text-align: center;
+  letter-spacing: 3px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 0.85rem !important;
+}
+
+.captcha-input-row .invalid-feedback {
+  text-align: center;
+}
+
 @media (max-width: 480px) {
   .login-card-header { padding: 2rem 1.5rem 1.5rem; }
   .login-card-body { padding: 1.5rem 1.25rem 1.5rem; }

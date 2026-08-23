@@ -617,6 +617,55 @@
   margin: 0;
 }
 
+.online-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.online-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.online-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 2px;
+}
+
+.activity-hidden {
+  display: none;
+}
+
+.activity-expanded .activity-hidden {
+  display: flex;
+}
+
+.activity-toggle {
+  padding: 10px 20px;
+  border-top: 1px solid rgba(0,0,0,0.03);
+  text-align: center;
+}
+
+.btn-toggle-more {
+  background: none;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--dtext-sec);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-toggle-more:hover {
+  background: rgba(0,0,0,0.03);
+  color: var(--dtext);
+}
+
+.mod-sky .mod-icon { background: rgba(14,165,233,0.08); color: #0ea5e9; }
+.mod-fuchsia .mod-icon { background: rgba(217,70,239,0.08); color: #d946ef; }
+.mod-slate .mod-icon { background: rgba(100,116,139,0.08); color: #64748b; }
+
 @media (max-width: 992px) {
   .kpi-row { grid-template-columns: repeat(3, 1fr); }
   .modulos-grid { grid-template-columns: repeat(2, 1fr); }
