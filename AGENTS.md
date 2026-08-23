@@ -55,7 +55,7 @@ docs/                    # ARQUITECTURA_INVENTARIO.md, GUIA_DEFENSA.md,
 - No asumas que existe una librería: revisa `requirements.txt` primero. Nada nuevo sin justificarlo.
 - UI, mensajes, comentarios y commits **en español** (así está todo el proyecto).
 - Las validaciones JS no cuentan: toda escritura valida también en servidor.
-- Los tests corren contra BDs de test (`*_test`), nunca contra las reales. Hoy NO existen tests (skill tests-pytest es el punto de partida).
+- Los tests corren contra BDs de test (`*_test`), nunca contra las reales. Suite base en `tests/` (conftest clona los `.sql` a `estadio_db_test`/`seguridad_test`); correr con `venv/bin/pytest -q` y ver `CHECKLIST.md`.
 - No toques `venv/`, `__pycache__/`, `.DS_Store`, `run.py.bak`.
 
 ## Cómo extender (recetas cortas)
@@ -67,4 +67,4 @@ docs/                    # ARQUITECTURA_INVENTARIO.md, GUIA_DEFENSA.md,
 
 ## Deudas conocidas (no reintroducirlas, atacarlas al tocar el archivo)
 
-SocketIO sin auth + CORS `"*"` · SECRET_KEY con fallback hardcodeado · open redirect en `next` del login · `except Exception: pass` silenciosos · `_registrar_bitacora` duplicado en ~15 controladores · `reportes_controller.py` ~1.200 líneas · presencia SocketIO no escala a múltiples workers · cero tests.
+SocketIO sin auth + CORS `"*"` · SECRET_KEY con fallback hardcodeado · open redirect en `next` del login · `except Exception: pass` silenciosos · `_registrar_bitacora` duplicado en ~15 controladores · `reportes_controller.py` ~1.200 líneas · presencia SocketIO no escala a múltiples workers. (Resueltas: SECRET_KEY, CORS, auth de sockets, open redirect — ver `CHECKLIST.md`.)

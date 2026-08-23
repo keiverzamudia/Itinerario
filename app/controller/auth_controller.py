@@ -92,6 +92,9 @@ def login():
             _registrar_bitacora('login', 'Inicio de sesión', f'Usuario {usuario.email} inició sesión')
             flash(f'¡Bienvenido {usuario.nombre}!', 'success')
             next_page = request.args.get('next')
+            # ponytail: solo rutas internas; bloquea absolutas ("http://..."), protocol-relative ("//evil.com") y "\evil.com"
+            if not next_page or not next_page.startswith('/') or next_page.startswith('//') or '\\' in next_page:
+                next_page = None
             return redirect(next_page or url_for('dashboard.panel'))
         else:
             flash('Email o contraseña incorrectos', 'danger')

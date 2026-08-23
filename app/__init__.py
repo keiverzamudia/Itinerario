@@ -10,7 +10,9 @@ from flask_login import LoginManager, current_user, logout_user
 load_dotenv()
 
 csrf = CSRFProtect()
-socketio = SocketIO(cors_allowed_origins="*")
+# ponytail: mismo origen por defecto; SOCKET_ALLOWED_ORIGINS="https://a.com,https://b.com" si algún día hay dominios externos
+_origins_env = os.getenv('SOCKET_ALLOWED_ORIGINS', '')
+socketio = SocketIO(cors_allowed_origins=[o.strip() for o in _origins_env.split(',') if o.strip()] or None)
 usuarios_conectados = {}
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -24,7 +26,10 @@ def create_app():
                 template_folder=str(_root / 'app' / 'view'),
                 static_folder=str(_root / 'app' / 'static'))
 
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'clave-segura-cambiar-en-produccion')
+    secret_key = os.getenv('SECRET_KEY')
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY no definida: agrega SECRET_KEY al archivo .env (genera una con 'python3 -c \"import secrets; print(secrets.token_hex(32))\"')")
+    app.config['SECRET_KEY'] = secret_key
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     app.config['WTF_CSRF_TIME_LIMIT'] = None
 
@@ -110,16 +115,17 @@ def create_app():
 
     @socketio.on('connect')
     def handle_connect():
-        pass
-
+        # Rechaza sockets anónimos; la identidad SIEMPRE sale de la sesión, nunca del cliente
+        if not current_user.is_authenticated:
+            return False
 
     @socketio.on('registrar_usuario')
     def handle_registrar_usuario(data):
         from flask import request
         sid = request.sid
         usuarios_conectados[sid] = {
-            'user_id': data.get('user_id'),
-            'nombre': data.get('nombre'),
+            'user_id': current_user.id,
+            'nombre': current_user.nombre,
             'pagina': data.get('pagina', '/'),
             'en_vivo_id': data.get('en_vivo_id')
         }
