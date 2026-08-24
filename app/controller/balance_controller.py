@@ -1,4 +1,5 @@
 import json
+import logging
 import io
 from datetime import datetime, date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
@@ -11,6 +12,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from app.helpers.balance_report import generar_pdf_estado_cuenta
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('balance', __name__, url_prefix='/balance')
 
@@ -29,7 +32,7 @@ def _bitacora(tipo, accion, detalle):
             'ip_address': request.remote_addr,
         })
     except Exception:
-        pass
+        logger.exception('Error no controlado')
 
 @bp.route('/', methods=['GET'])
 @permiso_requerido('balance.view')

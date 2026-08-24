@@ -11,6 +11,9 @@ const MODULE_CONFIG = {
                     { value: 'en_vivo', label: 'En Vivo' },
                     { value: 'finalizado', label: 'Finalizado' },
                 ], colClass: 'col-md-3' },
+            { id: 'encargado', label: 'Encargado', type: 'select', loadVia: 'ajax', colClass: 'col-md-3' },
+            { id: 'elementos_min', label: 'Elementos Mín', type: 'number', placeholder: '0', colClass: 'col-md-2' },
+            { id: 'elementos_max', label: 'Elementos Máx', type: 'number', placeholder: '100', colClass: 'col-md-2' },
             { id: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', colClass: 'col-md-3' },
             { id: 'fecha_fin', label: 'Fecha Fin', type: 'date', colClass: 'col-md-3' },
         ],
@@ -55,8 +58,13 @@ const MODULE_CONFIG = {
                     { value: '', label: 'Todos' },
                     { value: 'pendiente', label: 'Pendientes' },
                     { value: 'entregado', label: 'Entregados' },
-                ], colClass: 'col-md-3' },
-            { id: 'patrocinador_id', label: 'Patrocinador', type: 'select', loadVia: 'ajax', colClass: 'col-md-3' },
+                ], colClass: 'col-md-3',
+                progressive: ['patrocinador_id'] },
+            { id: 'patrocinador_id', label: 'Patrocinador', type: 'select', loadVia: 'ajax', dependsOn: ['estado'], colClass: 'col-md-3' },
+            { id: 'cantidad_min', label: 'Cantidad Mín', type: 'number', placeholder: '0', colClass: 'col-md-2' },
+            { id: 'cantidad_max', label: 'Cantidad Máx', type: 'number', placeholder: '999', colClass: 'col-md-2' },
+            { id: 'cantidad_entregada_min', label: 'Entregados Mín', type: 'number', placeholder: '0', colClass: 'col-md-2' },
+            { id: 'cantidad_entregada_max', label: 'Entregados Máx', type: 'number', placeholder: '999', colClass: 'col-md-2' },
             { id: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', colClass: 'col-md-3' },
             { id: 'fecha_fin', label: 'Fecha Fin', type: 'date', colClass: 'col-md-3' },
         ],
@@ -170,19 +178,21 @@ const MODULE_CONFIG = {
     },
     tareas: {
         filters: [
-            { id: 'Estado', label: 'Estado', type: 'select',
+            { id: 'estado', label: 'Estado', type: 'select',
                 options: [
                     { value: '', label: 'Todos' },
                     { value: 'Pendiente', label: 'Pendientes' },
                     { value: 'En Progreso', label: 'En Progreso' },
                     { value: 'Completada', label: 'Completadas' },
-                ], colClass: 'col-md-3' },
+                ], colClass: 'col-md-3',
+                progressive: ['asignado_a'] },
+            { id: 'asignado_a', label: 'Usuario Asignado', type: 'select', loadVia: 'ajax', dependsOn: ['estado'], colClass: 'col-md-3' },
             { id: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', colClass: 'col-md-3' },
             { id: 'fecha_fin', label: 'Fecha Fin', type: 'date', colClass: 'col-md-3' },
         ],
         columns: [
-            { key: 'Nombre_Tarea', label: 'Tarea' },
-            { key: 'Estado', label: 'Estado' },
+            { key: 'nombre_tarea', label: 'Tarea' },
+            { key: 'estado', label: 'Estado' },
             { key: 'asignado_a', label: 'Asignado a' },
             { key: 'fecha_asignacion_tarea', label: 'Fecha' },
         ],
@@ -202,6 +212,12 @@ const MODULE_CONFIG = {
                     { value: 'Vigente', label: 'Vigentes' },
                     { value: 'Vencido', label: 'Vencidos' },
                 ], colClass: 'col-md-3' },
+            { id: 'estado_pat', label: 'Estado', type: 'select',
+                options: [
+                    { value: '', label: 'Todos' },
+                    { value: '1', label: 'Activos' },
+                    { value: '0', label: 'Inactivos' },
+                ], colClass: 'col-md-3' },
             { id: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', colClass: 'col-md-3' },
             { id: 'fecha_fin', label: 'Fecha Fin', type: 'date', colClass: 'col-md-3' },
         ],
@@ -219,8 +235,15 @@ const MODULE_CONFIG = {
     },
     usuarios: {
         filters: [
-            { id: 'rol', label: 'Rol', type: 'select', loadVia: 'ajax', colClass: 'col-md-3' },
-            { id: 'departamento', label: 'Departamento', type: 'select', loadVia: 'ajax', colClass: 'col-md-3' },
+            { id: 'departamento', label: 'Departamento', type: 'select', loadVia: 'ajax', colClass: 'col-md-3',
+                progressive: ['rol'] },
+            { id: 'rol', label: 'Rol', type: 'select', loadVia: 'ajax', dependsOn: ['departamento'], colClass: 'col-md-3' },
+            { id: 'activo', label: 'Estado', type: 'select',
+                options: [
+                    { value: '', label: 'Todos' },
+                    { value: '1', label: 'Activos' },
+                    { value: '0', label: 'Inactivos' },
+                ], colClass: 'col-md-2' },
             { id: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', colClass: 'col-md-3' },
             { id: 'fecha_fin', label: 'Fecha Fin', type: 'date', colClass: 'col-md-3' },
         ],
@@ -244,14 +267,18 @@ const MODULE_CONFIG = {
                     { value: 'en_reparacion', label: 'En Reparación' },
                     { value: 'reparado', label: 'Reparado' },
                     { value: 'baja', label: 'Dado de Baja' },
-                ], colClass: 'col-md-3' },
-            { id: 'recurso_id', label: 'Recurso', type: 'select', loadVia: 'ajax', colClass: 'col-md-3' },
+                ], colClass: 'col-md-3',
+                progressive: ['recurso_id'] },
+            { id: 'recurso_id', label: 'Recurso', type: 'select', loadVia: 'ajax', dependsOn: ['estado'], colClass: 'col-md-3' },
+            { id: 'dias_min', label: 'Días Mín', type: 'number', placeholder: '0', colClass: 'col-md-2' },
+            { id: 'dias_max', label: 'Días Máx', type: 'number', placeholder: '365', colClass: 'col-md-2' },
             { id: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', colClass: 'col-md-3' },
             { id: 'fecha_fin', label: 'Fecha Fin', type: 'date', colClass: 'col-md-3' },
         ],
         columns: [
             { key: 'recurso_nombre', label: 'Recurso' }, { key: 'estado', label: 'Estado' },
-            { key: 'fecha_ingreso', label: 'Ingreso' }, { key: 'diagnostico', label: 'Diagnóstico' },
+            { key: 'fecha_ingreso', label: 'Ingreso' }, { key: 'dias_en_taller', label: 'Días' },
+            { key: 'diagnostico', label: 'Diagnóstico' },
         ],
         kpiCards: [
             { key: 'total', label: 'Total', color: '#2563eb' },
@@ -259,11 +286,14 @@ const MODULE_CONFIG = {
             { key: 'en_reparacion', label: 'En Reparación', color: '#06b6d4' },
             { key: 'reparados', label: 'Reparados', color: '#10b981' },
             { key: 'dados_baja', label: 'Dados Baja', color: '#ef4444' },
+            { key: 'promedio_dias', label: 'Días Prom.', color: '#8b5cf6' },
         ],
     },
     reels: {
         filters: [
             { id: 'patrocinador_id', label: 'Patrocinador', type: 'select', loadVia: 'ajax', colClass: 'col-md-3' },
+            { id: 'duracion_min', label: 'Duración Mín (seg)', type: 'number', placeholder: '0', colClass: 'col-md-2' },
+            { id: 'duracion_max', label: 'Duración Máx (seg)', type: 'number', placeholder: '3600', colClass: 'col-md-2' },
             { id: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', colClass: 'col-md-3' },
             { id: 'fecha_fin', label: 'Fecha Fin', type: 'date', colClass: 'col-md-3' },
         ],
@@ -391,6 +421,19 @@ document.addEventListener('DOMContentLoaded', function () {
             html.push('</div>');
         });
         html.push('</div>');
+
+        // Análisis opcional del PDF (disponible para todos los módulos)
+        html.push('<div class="row g-2 mt-2 pt-2 border-top">');
+        html.push('<div class="col-12"><label class="form-label fw-bold small mb-1 text-muted"><i class="fas fa-chart-line me-1"></i>Análisis del PDF</label></div>');
+        html.push('<div class="col-md-4 form-check form-switch ps-4">'
+            + '<input class="form-check-input" type="checkbox" id="opcion_resumen" checked>'
+            + '<label class="form-check-label small" for="opcion_resumen">Resumen ejecutivo</label></div>');
+        html.push('<div class="col-md-4 form-check form-switch ps-4">'
+            + '<input class="form-check-input" type="checkbox" id="opcion_comparar">'
+            + '<label class="form-check-label small" for="opcion_comparar">Comparar período anterior</label></div>');
+        html.push('<div class="col-md-4">'
+            + '<input type="number" class="form-control form-control-sm" id="opcion_top_n" placeholder="Top N destacados (ej. 5)" min="1" max="20"></div>');
+        html.push('</div>');
         filterPanelBody.innerHTML = html.join('');
 
         config.filters.forEach(f => {
@@ -456,6 +499,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 data.usuarios.forEach(u => {
                     el.innerHTML += `<option value="${u.id}">${u.nombre}</option>`;
                 });
+            } else if (data.usuarios && filterId === 'asignado_a') {
+                el.innerHTML = '<option value="">Cualquier usuario</option>';
+                data.usuarios.forEach(u => {
+                    el.innerHTML += `<option value="${u.id}">${u.nombre}</option>`;
+                });
+            } else if (data.encargados && filterId === 'encargado') {
+                el.innerHTML = '<option value="">Todos los encargados</option>';
+                data.encargados.forEach(x => {
+                    el.innerHTML += `<option value="${x}">${x}</option>`;
+                });
             } else if (data.acciones && filterId === 'tipo_accion') {
                 el.innerHTML = '<option value="">Todas</option>';
                 data.acciones.forEach(a => {
@@ -503,18 +556,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
 
-            if (data.monto_min !== undefined) {
-                const minEl = document.getElementById('filtro_monto_min');
-                const maxEl = document.getElementById('filtro_monto_max');
-                if (minEl && !minEl.value) minEl.placeholder = `Mín: ${data.monto_min}`;
-                if (maxEl && !maxEl.value) maxEl.placeholder = `Máx: ${data.monto_max}`;
-            }
-            if (data.costo_min !== undefined) {
-                const minEl = document.getElementById('filtro_costo_min');
-                const maxEl = document.getElementById('filtro_costo_max');
-                if (minEl && !minEl.value) minEl.placeholder = `Mín: ${data.costo_min}`;
-                if (maxEl && !maxEl.value) maxEl.placeholder = `Máx: ${data.costo_max}`;
-            }
+            // pistas de rangos numéricos: cualquier par <campo>_min/<campo>_max del backend
+            Object.keys(data).forEach(k => {
+                const m = k.match(/^(.+)_min$/);
+                if (!m || data[`${m[1]}_max`] === undefined) return;
+                const campo = m[1];
+                const minEl = document.getElementById(`filtro_${campo}_min`);
+                const maxEl = document.getElementById(`filtro_${campo}_max`);
+                if (minEl && !minEl.value) minEl.placeholder = `Mín: ${data[k]}`;
+                if (maxEl && !maxEl.value) maxEl.placeholder = `Máx: ${data[`${campo}_max`]}`;
+            });
             if (data.fecha_min) {
                 const fi = document.getElementById('filtro_fecha_inicio');
                 const ff = document.getElementById('filtro_fecha_fin');
@@ -660,6 +711,14 @@ document.addEventListener('DOMContentLoaded', function () {
         Object.entries(vals).forEach(([k, v]) => {
             if (v) fd.append(k, v);
         });
+
+        // opciones de análisis del PDF
+        const opResumen = document.getElementById('opcion_resumen');
+        const opComparar = document.getElementById('opcion_comparar');
+        const opTopN = document.getElementById('opcion_top_n');
+        if (opResumen && opResumen.checked) fd.append('resumen', '1');
+        if (opComparar && opComparar.checked) fd.append('comparar', '1');
+        if (opTopN && parseInt(opTopN.value, 10) > 0) fd.append('top_n', opTopN.value);
 
         try {
             const res = await fetch('/reportes/generar', {

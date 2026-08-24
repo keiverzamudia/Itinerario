@@ -1,5 +1,8 @@
 import json
+import logging
 from app.database import Database
+
+logger = logging.getLogger(__name__)
 
 
 class ChatModel:
@@ -21,6 +24,7 @@ class ChatModel:
                 )
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def historial(self, usuario_id, limite=20):
@@ -36,6 +40,7 @@ class ChatModel:
                 )
                 return list(reversed(cur.fetchall()))
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def contar_por_usuario(self, usuario_id):
@@ -49,4 +54,5 @@ class ChatModel:
                 row = cur.fetchone()
                 return row['total'] if row else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0

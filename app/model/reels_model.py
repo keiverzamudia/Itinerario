@@ -1,6 +1,9 @@
 from app.database import Database
+import logging
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class ReelModel(ValidacionesMixin, CrudInterface):
@@ -24,18 +27,20 @@ class ReelModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def consultar(self):
         try:
             db = self._get_db()
             with db.cursor() as cur:
-                cur.execute("SELECT id, nombre, duracion_total, creado_en, modificado_en FROM reels ORDER BY creado_en DESC")
+                cur.execute("SELECT id, nombre, id_patrocinador AS patrocinado, duracion_total, creado_en, modificado_en FROM reels ORDER BY creado_en DESC")
                 reels = cur.fetchall()
             for reel in reels:
                 reel['videos'] = self._obtener_videos(reel['id'])
             return reels
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id):
@@ -49,6 +54,7 @@ class ReelModel(ValidacionesMixin, CrudInterface):
             reel['videos'] = self._obtener_videos(id)
             return reel
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def _validar_datos_recurso(self) -> bool:
@@ -77,6 +83,7 @@ class ReelModel(ValidacionesMixin, CrudInterface):
                 )
                 return self.obtener_por_id(cur.lastrowid)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def registrar(self, datos):
@@ -89,6 +96,7 @@ class ReelModel(ValidacionesMixin, CrudInterface):
                 )
                 return self.obtener_por_id(cur.lastrowid)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def modificar(self, id, datos):
@@ -106,6 +114,7 @@ class ReelModel(ValidacionesMixin, CrudInterface):
                 cur.execute(f"UPDATE reels SET {', '.join(sets)} WHERE id = %s", params)
             return self.obtener_por_id(id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def confirmar_modificacion(self, id):
@@ -124,6 +133,7 @@ class ReelModel(ValidacionesMixin, CrudInterface):
                 cur.execute("DELETE FROM reels WHERE id = %s", (id,))
             return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
 
@@ -141,6 +151,7 @@ class VideoModel:
                 )
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def registrar(self, datos):
@@ -156,6 +167,7 @@ class VideoModel:
                 id = cur.lastrowid
             return {'id': id, **datos}
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def eliminar(self, id):
@@ -164,4 +176,4 @@ class VideoModel:
             with db.cursor() as cur:
                 cur.execute("DELETE FROM videos WHERE id = %s", (id,))
         except Exception:
-            pass
+            logger.exception('Error de base de datos')

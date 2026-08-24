@@ -1,7 +1,7 @@
 """Tests de helpers del módulo reportes — lógica pura, sin BD."""
 from datetime import datetime
 
-from app.controller.reportes_controller import (
+from app.helpers.reportes_utils import (
     _parsear_fecha,
     _ordenar_datos,
     _formatear_tiempo,

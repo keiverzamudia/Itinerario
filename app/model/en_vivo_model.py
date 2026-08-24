@@ -1,5 +1,8 @@
 from datetime import datetime, date, time, timedelta
+import logging
 from app.database import Database, transaction
+
+logger = logging.getLogger(__name__)
 
 
 class SincronizacionModel:
@@ -24,6 +27,7 @@ class SincronizacionModel:
             db.commit()
             return id
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def consultar(self, guion_id, filtro='todos', limite=100):
@@ -64,6 +68,7 @@ class SincronizacionModel:
                     r['fecha_formateada'] = r['fecha_sincronizacion'].strftime('%d/%m/%Y')
             return rows
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
 
@@ -78,6 +83,7 @@ class EnVivoModel:
                 cur.execute("SELECT * FROM guiones WHERE estado = 'en_vivo' AND status = 1 LIMIT 1")
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def consultar_guiones_disponibles(self):
@@ -103,6 +109,7 @@ class EnVivoModel:
                     g['fechas'] = fechas_map.get(g['id'], [])
             return guiones
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def iniciar(self, guion_id):
@@ -111,7 +118,7 @@ class EnVivoModel:
                 db = self._get_db()
                 with db.cursor() as cur:
                     cur.execute(
-                        """UPDATE guiones SET estado = 'en_vivo', modificado_en = NOW()
+                        """UPDATE guiones SET estado = 'en_vivo', modificado_en = NOW(), inicio_show = NOW()
                            WHERE id = %s AND estado != 'en_vivo' AND NOT EXISTS (
                                SELECT 1 FROM guiones WHERE estado = 'en_vivo' AND id != %s
                            )""",
@@ -119,13 +126,20 @@ class EnVivoModel:
                     )
                     if cur.rowcount == 0:
                         return False
-                    cur.execute("UPDATE elementos_guion SET estado = 'pendiente' WHERE guion_id = %s", (guion_id,))
+                    cur.execute(
+                        "UPDATE elementos_guion SET estado = 'pendiente', inicio_curso = NULL WHERE guion_id = %s",
+                        (guion_id,)
+                    )
                     cur.execute("SELECT * FROM elementos_guion WHERE guion_id = %s ORDER BY orden LIMIT 1", (guion_id,))
                     primero = cur.fetchone()
                     if primero:
-                        cur.execute("UPDATE elementos_guion SET estado = 'en_curso' WHERE id = %s", (primero['id'],))
+                        cur.execute(
+                            "UPDATE elementos_guion SET estado = 'en_curso', inicio_curso = NOW() WHERE id = %s",
+                            (primero['id'],)
+                        )
             return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def finalizar(self, guion_id):
@@ -133,10 +147,17 @@ class EnVivoModel:
             with transaction('estadio_db'):
                 db = self._get_db()
                 with db.cursor() as cur:
-                    cur.execute("UPDATE guiones SET estado = 'finalizado', modificado_en = NOW() WHERE id = %s", (guion_id,))
-                    cur.execute("UPDATE elementos_guion SET estado = 'pendiente' WHERE guion_id = %s", (guion_id,))
+                    cur.execute(
+                        "UPDATE guiones SET estado = 'finalizado', modificado_en = NOW(), inicio_show = NULL WHERE id = %s",
+                        (guion_id,)
+                    )
+                    cur.execute(
+                        "UPDATE elementos_guion SET estado = 'pendiente', inicio_curso = NULL WHERE guion_id = %s",
+                        (guion_id,)
+                    )
             return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_elementos_en_vivo(self, guion_id):
@@ -151,6 +172,7 @@ class EnVivoModel:
                 game = cur.fetchall()
             return fechas, pregame, game
         except Exception:
+            logger.exception('Error de base de datos')
             return [], [], []
 
     def sincronizar_estados(self, guion_id, estados):
@@ -167,11 +189,22 @@ class EnVivoModel:
                             cur.execute("SELECT tipo, hora, inning, medio_inning, contenido, estado FROM elementos_guion WHERE id = %s", (int(eid),))
                             elem = cur.fetchone()
                             if elem and elem['estado'] != estado_str:
-                                cur.execute("UPDATE elementos_guion SET estado = %s WHERE id = %s", (estado_str, int(eid)))
+                                # reloj del elemento: entra a en_curso -> arranca; sale -> se limpia
+                                if estado_str == 'en_curso':
+                                    cur.execute(
+                                        "UPDATE elementos_guion SET estado = %s, inicio_curso = NOW() WHERE id = %s",
+                                        (estado_str, int(eid))
+                                    )
+                                else:
+                                    cur.execute(
+                                        "UPDATE elementos_guion SET estado = %s, inicio_curso = NULL WHERE id = %s",
+                                        (estado_str, int(eid))
+                                    )
                                 if accion:
                                     descs.append(self._fmt_evento_log(elem, accion))
             return descs
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def _fmt_evento_log(self, elem, accion):
@@ -199,9 +232,10 @@ class EnVivoModel:
         try:
             db = self._get_db()
             with db.cursor() as cur:
-                cur.execute("SELECT id, estado FROM elementos_guion WHERE guion_id = %s", (guion_id,))
+                cur.execute("SELECT id, estado, inicio_curso FROM elementos_guion WHERE guion_id = %s", (guion_id,))
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def guiones_por_fecha(self, fecha):
@@ -219,4 +253,5 @@ class EnVivoModel:
                 )
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []

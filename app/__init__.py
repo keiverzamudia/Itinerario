@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, session, request, redirect, url_for, flash
 from flask_wtf.csrf import CSRFProtect
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room
 from flask_login import LoginManager, current_user, logout_user
 
 load_dotenv()
@@ -18,6 +18,16 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Por favor inicia sesión para acceder'
 login_manager.login_message_category = 'warning'
+
+
+def sala_usuario(user_id):
+    return f'user_{user_id}'
+
+
+def emitir_notificacion(user_ids, payload):
+    """Empuja una notificación en vivo a las salas privadas de los usuarios."""
+    for uid in set(user_ids):
+        socketio.emit('notificacion_nueva', payload, room=sala_usuario(uid))
 
 
 def create_app():
@@ -77,6 +87,7 @@ def create_app():
     from app.controller.reels_controller import bp as reels_bp
     from app.controller.reportes_controller import bp as reportes_bp
     from app.controller.chat_controller import bp as chat_bp
+    from app.controller.notificaciones_controller import bp as notificaciones_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -95,6 +106,7 @@ def create_app():
     app.register_blueprint(reels_bp)
     app.register_blueprint(reportes_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(notificaciones_bp)
 
     @app.before_request
     def verificar_sesion_unica():
@@ -129,6 +141,8 @@ def create_app():
             'pagina': data.get('pagina', '/'),
             'en_vivo_id': data.get('en_vivo_id')
         }
+        # sala privada: las notificaciones solo llegan a los sockets de su dueño
+        join_room(sala_usuario(current_user.id))
         _emit_usuarios_actualizados()
 
     @socketio.on('cambio_pagina')

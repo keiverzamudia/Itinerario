@@ -1,7 +1,11 @@
 from datetime import datetime
-from app.database import Database
+import logging
+from app.database import Database, transaction
+from app.config import DATABASE_CONFIG
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class TareaModel(ValidacionesMixin, CrudInterface):
@@ -51,6 +55,7 @@ class TareaModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.lastrowid
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def consultar(self, activas=True):
@@ -65,6 +70,7 @@ class TareaModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id_tarea):
@@ -74,6 +80,7 @@ class TareaModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT * FROM tareas WHERE id_tarea = %s", (id_tarea,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def modificar(self, id_tarea, datos):
@@ -91,6 +98,7 @@ class TareaModel(ValidacionesMixin, CrudInterface):
                     cur.execute(f"UPDATE tareas SET {', '.join(sets)} WHERE id_tarea = %s", params)
             return self.obtener_por_id(id_tarea)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def confirmar_modificacion(self, id_tarea):
@@ -119,6 +127,7 @@ class TareaModel(ValidacionesMixin, CrudInterface):
                 cur.execute("UPDATE tareas SET Estatus = 0 WHERE id_tarea = %s", (id_tarea,))
             return tarea
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
 
@@ -145,6 +154,7 @@ class TareasAsignadasModel:
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id_asignacion):
@@ -160,6 +170,7 @@ class TareasAsignadasModel:
                 )
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def obtener_por_usuario(self, usuario_id):
@@ -176,6 +187,7 @@ class TareasAsignadasModel:
                 )
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def registrar(self, datos):
@@ -195,7 +207,52 @@ class TareasAsignadasModel:
                 )
                 return self.obtener_por_id(cur.lastrowid)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
+
+    def asignar_a_usuarios(self, id_tarea, ids_usuarios, titulo_tarea, asignador):
+        """Asigna la tarea a varios usuarios y notifica a cada uno.
+        Una sola transacción: asignaciones + notificaciones (escritura cruzada al
+        esquema de seguridad configurado, mismo servidor).
+        Devuelve (asignados, omitidos_duplicados)."""
+        # nombre de esquema desde config (soporta *_test); nunca input del cliente
+        esquema_seg = DATABASE_CONFIG['seguridad']['database']
+        asignados, omitidos = [], []
+        try:
+            with transaction('estadio_db'):
+                db = self._get_db()
+                with db.cursor() as cur:
+                    for uid in ids_usuarios:
+                        cur.execute(
+                            "SELECT id_asignacion FROM tareas_asignadas "
+                            "WHERE id_tarea = %s AND id_usuario = %s AND Estatus = 1",
+                            (id_tarea, uid)
+                        )
+                        if cur.fetchone():
+                            omitidos.append(uid)
+                            continue
+                        cur.execute(
+                            """INSERT INTO tareas_asignadas
+                               (id_tarea, id_usuario, Estado, fecha_asignacion_tarea, Estatus)
+                               VALUES (%s, %s, 'Pendiente', NOW(), 1)""",
+                            (id_tarea, uid)
+                        )
+                        asignados.append(uid)
+                        cur.execute(
+                            f"""INSERT INTO {esquema_seg}.notificaciones
+                               (usuario_id, tipo, titulo, mensaje, url, leida, fecha_creacion)
+                               VALUES (%s, 'tarea_asignada', %s, %s, %s, 0, NOW())""",
+                            (
+                                uid,
+                                'Nueva tarea asignada',
+                                f'"{titulo_tarea}" te fue asignada por {asignador}',
+                                '/gestion-tarea/mis-tareas',
+                            )
+                        )
+            return asignados, omitidos
+        except Exception:
+            logger.exception('Error de base de datos')
+            return None, None
 
     def modificar_estado(self, id_asignacion, estado):
         try:
@@ -206,7 +263,7 @@ class TareasAsignadasModel:
                     (estado, id_asignacion)
                 )
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def consultar_todas(self):
         try:
@@ -225,6 +282,7 @@ class TareasAsignadasModel:
                 """)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def contar_pendientes(self, usuario_id):
@@ -241,4 +299,5 @@ class TareasAsignadasModel:
                 row = cur.fetchone()
                 return row['total'] if row else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0

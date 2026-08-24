@@ -5,7 +5,6 @@ from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import GUION
 from app.model.guion_model import (GuionModel, ElementoGuionModel, _parsear_duracion)
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('guion', __name__, url_prefix='/guiones')
 
@@ -20,18 +19,8 @@ def _usuarios_choices():
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'guion',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('guion', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET'])

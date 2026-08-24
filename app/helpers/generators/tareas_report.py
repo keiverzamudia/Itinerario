@@ -14,13 +14,14 @@ class TareasReport(BaseReportGenerator):
         ('Asignado a', 'asignado', 80), ('Fecha', 'fecha', 75),
     ]
 
-    def generate(self, datos, filtros=None, kpis=None):
+    def generate(self, datos, filtros=None, kpis=None, opciones=None):
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
         story = []
         story.extend(self._header(filtros))
         if kpis:
             story.extend(self._seccion_kpis(kpis))
+        story.extend(self._secciones_analisis(kpis, opciones))
         rows = self._build_rows(datos)
         if rows:
             header = [Paragraph(f"<b>{h}</b>", self.style_bold) for h, _, _ in self.COLUMNAS]
@@ -40,7 +41,7 @@ class TareasReport(BaseReportGenerator):
 
     def _build_rows(self, datos):
         return [[
-            Paragraph(str(d.get('Nombre_Tarea', ''))[:30], self.style_normal),
-            str(d.get('Estado', 'Pendiente')),
+            Paragraph(str(d.get('nombre_tarea', ''))[:30], self.style_normal),
+            str(d.get('estado', 'Pendiente')),
             str(d.get('asignado_a', '—')), str(d.get('fecha_asignacion_tarea', ''))[:10] or '—',
         ] for d in datos]

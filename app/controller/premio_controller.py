@@ -4,7 +4,6 @@ from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import PREMIO
 from app.model.premio_model import PremioModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('premio', __name__, url_prefix='/premio')
 
@@ -12,18 +11,8 @@ bp.before_request(verificar_acceso(PREMIO))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'premio',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('premio', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET', 'POST'])

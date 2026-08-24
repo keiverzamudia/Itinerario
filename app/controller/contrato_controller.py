@@ -5,7 +5,6 @@ from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import CONTRATO
 from app.model.contrato_model import ContratoModel
 from app.model.patrocinador_model import PatrocinadorModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('contrato', __name__, url_prefix='/contratos')
 
@@ -13,18 +12,8 @@ bp.before_request(verificar_acceso(CONTRATO))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'contrato',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('contrato', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET', 'POST'])

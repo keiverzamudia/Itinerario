@@ -1,5 +1,8 @@
 from app.database import Database
+import logging
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class RecursoModel(ValidacionesMixin):
@@ -23,6 +26,7 @@ class RecursoModel(ValidacionesMixin):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id):
@@ -32,6 +36,7 @@ class RecursoModel(ValidacionesMixin):
                 cur.execute("SELECT * FROM recursos WHERE id = %s", (id,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def contar(self, **filtros):
@@ -47,6 +52,7 @@ class RecursoModel(ValidacionesMixin):
                 row = cur.fetchone()
                 return row['total'] if row else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0
 
     def modificar(self, id, datos):
@@ -66,6 +72,7 @@ class RecursoModel(ValidacionesMixin):
                 cur.execute(f"UPDATE recursos SET {', '.join(sets)} WHERE id = %s", params)
             return self.obtener_por_id(id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def verificar_nombre(self, nombre):
@@ -79,6 +86,7 @@ class RecursoModel(ValidacionesMixin):
                 row = cur.fetchone()
                 return row['total'] > 0 if row else False
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
 
@@ -148,6 +156,7 @@ class MantenimientoModel(ValidacionesMixin):
                 new_id = cur.lastrowid
             return self.obtener_por_id(new_id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def consultar(self):
@@ -162,6 +171,7 @@ class MantenimientoModel(ValidacionesMixin):
                 self._cargar_relaciones(m)
             return items
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def _cargar_relaciones(self, m):
@@ -185,7 +195,7 @@ class MantenimientoModel(ValidacionesMixin):
                     u_row = cur.fetchone()
                     h['usuario_nombre'] = u_row['nombre'] if u_row else 'Desconocido'
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def obtener_por_id(self, id):
         try:
@@ -198,6 +208,7 @@ class MantenimientoModel(ValidacionesMixin):
             self._cargar_relaciones(m)
             return m
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def modificar(self, id, datos):
@@ -215,6 +226,7 @@ class MantenimientoModel(ValidacionesMixin):
                     cur.execute(f"UPDATE mantenimientos SET {', '.join(sets)} WHERE id = %s", params)
             return self.obtener_por_id(id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
 
@@ -238,6 +250,7 @@ class HistorialMantenimientoModel:
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def registrar(self, datos):
@@ -254,4 +267,5 @@ class HistorialMantenimientoModel:
                 new_id = cur.lastrowid
             return {'id': new_id, **datos}
         except Exception:
+            logger.exception('Error de base de datos')
             return None

@@ -1,7 +1,10 @@
 from datetime import datetime, date, timezone
+import logging
 from app.database import Database
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class PremioModel(ValidacionesMixin, CrudInterface):
@@ -69,6 +72,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def consultar(self, **filtros):
@@ -84,6 +88,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def contar(self, **filtros):
@@ -99,6 +104,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 row = cur.fetchone()
                 return row['total'] if row else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0
 
     def confirmar_modificacion(self, id):
@@ -120,6 +126,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 cur.execute(f"UPDATE premios SET {', '.join(sets)} WHERE id = %s", params)
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def confirmar_eliminacion(self, id):
@@ -133,6 +140,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("UPDATE premios SET estatus = TRUE WHERE id = %s", (id_registro,))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_premios_pendientes(self):
@@ -152,6 +160,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 """)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_premios_entregados(self):
@@ -179,6 +188,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                     p['usuario_nombre'] = '\u2014'
             return premios
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_patrocinadores(self):
@@ -188,6 +198,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT id_patrocinador, nombre_empresa FROM patrocinadores WHERE estado = 1 ORDER BY nombre_empresa")
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_para_api(self, premio_id):
@@ -197,6 +208,7 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT id, nombre, id_patrocinador, descripcion, foto, cantidad, cantidad_entregada FROM premios WHERE id = %s AND estatus = FALSE", (premio_id,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def entregar(self, premio_id, id_patrocinador=None, descripcion=None, entregado_por=None, cantidad_entregar=1):
@@ -230,4 +242,5 @@ class PremioModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False

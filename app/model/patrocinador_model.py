@@ -1,6 +1,9 @@
 from app.database import Database
+import logging
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class PatrocinadorModel(ValidacionesMixin, CrudInterface):
@@ -86,6 +89,7 @@ class PatrocinadorModel(ValidacionesMixin, CrudInterface):
                 ))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def consultar(self, activos=True):
@@ -100,6 +104,7 @@ class PatrocinadorModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id_patrocinador):
@@ -109,6 +114,7 @@ class PatrocinadorModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT * FROM patrocinadores WHERE id_patrocinador = %s", (id_patrocinador,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def confirmar_modificacion(self, id):
@@ -131,6 +137,7 @@ class PatrocinadorModel(ValidacionesMixin, CrudInterface):
                 ))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def confirmar_eliminacion(self, id):
@@ -144,6 +151,7 @@ class PatrocinadorModel(ValidacionesMixin, CrudInterface):
                 cur.execute("UPDATE patrocinadores SET estado = 0 WHERE id_patrocinador = %s", (id,))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def verificar_nombre_empresa(self, nombre):
@@ -157,4 +165,5 @@ class PatrocinadorModel(ValidacionesMixin, CrudInterface):
                 row = cur.fetchone()
                 return row['total'] > 0 if row else False
         except Exception:
+            logger.exception('Error de base de datos')
             return False

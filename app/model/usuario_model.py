@@ -1,7 +1,10 @@
 from app.database import Database
+import logging
 from werkzeug.security import generate_password_hash
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class UsuarioModel(ValidacionesMixin, CrudInterface):
@@ -95,6 +98,7 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 ))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def consultar(self):
@@ -104,6 +108,7 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT * FROM usuarios ORDER BY nombre")
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id):
@@ -113,6 +118,7 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def confirmar_modificacion(self, id):
@@ -140,6 +146,7 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def confirmar_eliminacion(self, id):
@@ -153,6 +160,7 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("DELETE FROM usuarios WHERE id = %s", (id,))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def cambiar_password(self, id, password_actual, password_nueva):
@@ -175,6 +183,7 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 )
                 return True
         except Exception:
+            logger.exception('Error de base de datos')
             return 'Error al cambiar la contraseña'
 
     def verificar_email(self, email):
@@ -185,6 +194,7 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 row = cur.fetchone()
                 return row['total'] > 0 if row else False
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def verificar_cedula(self, cedula):
@@ -195,4 +205,5 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
                 row = cur.fetchone()
                 return row['total'] > 0 if row else False
         except Exception:
+            logger.exception('Error de base de datos')
             return False

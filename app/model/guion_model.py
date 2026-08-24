@@ -1,7 +1,10 @@
 from datetime import datetime, date, time, timedelta
+import logging
 from app.database import Database, transaction
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 def _parsear_duracion(val):
@@ -74,6 +77,7 @@ class GuionModel(ValidacionesMixin):
                     )
             return id
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def consultar(self, **filtros):
@@ -89,6 +93,7 @@ class GuionModel(ValidacionesMixin):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def contar(self, **filtros):
@@ -104,6 +109,7 @@ class GuionModel(ValidacionesMixin):
                 row = cur.fetchone()
                 return row['total'] if row else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0
 
     def obtener_por_id(self, id_registro):
@@ -113,6 +119,7 @@ class GuionModel(ValidacionesMixin):
                 cur.execute("SELECT * FROM guiones WHERE id = %s AND status = 1", (id_registro,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def obtener_fechas(self, guion_id):
@@ -122,6 +129,7 @@ class GuionModel(ValidacionesMixin):
                 cur.execute("SELECT * FROM guion_fechas WHERE guion_id = %s ORDER BY fecha", (guion_id,))
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def _validar_datos_guion_dict(self, datos) -> bool:
@@ -153,6 +161,7 @@ class GuionModel(ValidacionesMixin):
                     )
             return id
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def verificar_nombre(self, nombre):
@@ -166,6 +175,7 @@ class GuionModel(ValidacionesMixin):
                 row = cur.fetchone()
                 return row['total'] > 0 if row else False
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def modificar(self, id_registro, datos):
@@ -198,6 +208,7 @@ class GuionModel(ValidacionesMixin):
                             )
             return self.obtener_por_id(id_registro)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def eliminar(self, id_registro):
@@ -208,6 +219,7 @@ class GuionModel(ValidacionesMixin):
                     cur.execute("UPDATE guiones SET status = 0, modificado_en = NOW() WHERE id = %s", (id_registro,))
             return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def replicar(self, guion_origen_id, fechas, nombre_base):
@@ -245,6 +257,7 @@ class GuionModel(ValidacionesMixin):
                         ids_creados.append(nuevo_id)
             return ids_creados
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
 
@@ -340,6 +353,7 @@ class ElementoGuionModel(ValidacionesMixin):
             db.commit()
             return self.obtener_por_id(id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def consultar(self, **filtros):
@@ -358,6 +372,7 @@ class ElementoGuionModel(ValidacionesMixin):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id_registro):
@@ -367,6 +382,7 @@ class ElementoGuionModel(ValidacionesMixin):
                 cur.execute("SELECT * FROM elementos_guion WHERE id = %s", (id_registro,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def modificar(self, id_registro, datos):
@@ -386,6 +402,7 @@ class ElementoGuionModel(ValidacionesMixin):
                 db.commit()
             return self.obtener_por_id(id_registro)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def eliminar(self, id_registro):
@@ -395,7 +412,7 @@ class ElementoGuionModel(ValidacionesMixin):
                 cur.execute("DELETE FROM elementos_guion WHERE id = %s", (id_registro,))
             db.commit()
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def obtener_ocupados(self, guion_id):
         try:
@@ -410,6 +427,7 @@ class ElementoGuionModel(ValidacionesMixin):
                     innings_usados[key] = e['id']
             return horas_usadas, innings_usados
         except Exception:
+            logger.exception('Error de base de datos')
             return set(), {}
 
     def obtener_ultimo_orden(self, guion_id, tipo):
@@ -423,6 +441,7 @@ class ElementoGuionModel(ValidacionesMixin):
                 row = cur.fetchone()
                 return row['max_orden'] if row and row['max_orden'] else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0
 
     def consultar_excepto(self, guion_id, elemento_id):
@@ -435,6 +454,7 @@ class ElementoGuionModel(ValidacionesMixin):
                 )
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_guion_ordenados(self, guion_id):

@@ -21,6 +21,22 @@
     <i class="fas fa-bars"></i>
 </button>
 
+<div class="dropdown notif-wrap">
+    <button class="notif-bell" type="button" id="btnNotificaciones" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="Notificaciones">
+        <i class="fas fa-bell"></i>
+        <span class="notif-badge" id="notifBadge" hidden>0</span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end notif-menu" data-bs-display="static" aria-labelledby="btnNotificaciones">
+        <div class="notif-head d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Notificaciones</span>
+            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 small" id="btnLeerTodas">Marcar todas leídas</button>
+        </div>
+        <div class="notif-lista" id="notifLista">
+            <div class="notif-empty">Cargando…</div>
+        </div>
+    </div>
+</div>
+
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
         <img src="{{ url_for('static', filename='img/Logo-blanco.png') }}" alt="Logo">

@@ -1,4 +1,5 @@
 import json
+import logging
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
@@ -6,7 +7,8 @@ from app.helpers.permission_map import ROL
 from app.model.rol_model import (RolModel, PermisoModel, RolPermisoModel,
                                   UsuarioPermisoModel, DashboardVisibilidadModel,
                                   MODULOS_DASHBOARD_INFO)
-from app.model.bitacora_model import ActividadModel
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('rol', __name__, url_prefix='/roles')
 
@@ -14,18 +16,8 @@ bp.before_request(verificar_acceso(ROL))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'rol',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('rol', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -63,6 +55,7 @@ def dashboard():
                     'rol': r,
                 })
     except Exception:
+        logger.exception('Error calculando resumen de roles')
         enriched = [{'nombre': r['nombre'], 'total_permisos': 0, 'cant_usuarios': 0, 'total_posible': 0, 'rol': r} for r in roles]
     dashboard_data = obj_model.obtener_datos_dashboard()
     return render_template('rol/dashboard.html', roles=enriched, usuarios=usuarios, dashboard_data=dashboard_data)
@@ -135,7 +128,7 @@ def editar_rol(id):
             cur.execute("SELECT COUNT(*) as cnt FROM usuarios WHERE rol = (SELECT nombre FROM roles WHERE id = %s)", (id,))
             total_usuarios = cur.fetchone()['cnt']
     except Exception:
-        pass
+        logger.exception('Error no controlado')
     return render_template('rol/editar_rol.html', rol=rol,
                            permisos_agrupados=permisos_agrupados,
                            permisos_del_rol=permisos_del_rol,
@@ -163,7 +156,7 @@ def crear():
                             (id_rol, pid),
                         )
             except Exception:
-                pass
+                logger.exception('Error no controlado')
         if id_rol:
             _registrar_bitacora('create', 'Crear rol', f'Rol "{nombre}" creado')
             flash('Rol creado correctamente', 'success')

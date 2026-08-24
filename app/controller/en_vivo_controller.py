@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import date, datetime
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
@@ -7,7 +7,6 @@ from app.helpers.permission_map import EN_VIVO
 from app import socketio
 from app.model.guion_model import GuionModel
 from app.model.en_vivo_model import EnVivoModel, SincronizacionModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('en_vivo', __name__, url_prefix='/en-vivo')
 
@@ -19,19 +18,34 @@ VALID_ESTADOS_ELEMENTO = {'pendiente', 'en_curso', 'completado', 'reiniciado', N
 bp.before_request(verificar_acceso(EN_VIVO))
 
 
+def _ms(valor):
+    """Datetime naive del servidor -> epoch ms para el frontend (None-safe)."""
+    if not valor:
+        return None
+    if isinstance(valor, datetime):
+        return int(valor.timestamp() * 1000)
+    return None
+
+
+def _estados_para_cliente(guion_id):
+    """Estados actuales + reloj del servidor: fuente única de verdad temporal."""
+    return {
+        'guion_id': guion_id,
+        'servidor_ahora': _ms(datetime.now()),
+        'estados': [
+            {
+                'id': r['id'],
+                'estado': r['estado'],
+                'inicio_curso': _ms(r.get('inicio_curso')),
+            }
+            for r in EnVivoModel().obtener_estado_actual(guion_id)
+        ],
+    }
+
+
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'envivo',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('envivo', tipo, accion, detalle)
 
 
 def _fmt12(hora, duracion_segundos):
@@ -55,6 +69,7 @@ def _fmt_pregame(e):
         'contenido': e['contenido'],
         'duracion': e['duracion_estimada'],
         'encargado': e['encargado'],
+        'inicio_curso_ms': _ms(e.get('inicio_curso')),
     }
 
 
@@ -65,6 +80,7 @@ def _fmt_game(e):
         'contenido': e['contenido'],
         'duracion': e['duracion_estimada'],
         'encargado': e['encargado'],
+        'inicio_curso_ms': _ms(e.get('inicio_curso')),
     }
 
 
@@ -88,7 +104,9 @@ def ver(guion_id):
     pregame_data = [_fmt_pregame(e) for e in pregame_raw]
     game_data = [_fmt_game(e) for e in game_raw]
     return render_template('en_vivo/vivo.html', guion=guion, fechas=fechas,
-                           pregame=pregame_data, game=game_data)
+                           pregame=pregame_data, game=game_data,
+                           inicio_show_ms=_ms(guion.get('inicio_show')),
+                           servidor_ahora_ms=_ms(datetime.now()))
 
 
 @bp.route('/iniciar/<int:guion_id>')
@@ -128,15 +146,14 @@ def sincronizar(guion_id):
     for e in estados:
         estado_val = e.get('estado')
         if estado_val in VALID_ESTADOS_ELEMENTO and 'id' in e:
-            estados_validos.append({'id': int(e['id']), 'estado': estado_val})
+            # fix bug: sin `accion` el log de sincronizaciones nunca registraba marcajes
+            estados_validos.append({'id': int(e['id']), 'estado': estado_val, 'accion': e.get('accion')})
     descs = envivo_model.sincronizar_estados(guion_id, estados_validos)
     for desc in descs:
         sinc_model.registrar(guion_id, current_user.id, 'sincronizar', desc)
     _registrar_bitacora('update', 'Sincronizar elementos', f'Guión "{guion["nombre"]}": {len(descs)} elemento(s) sincronizado(s)')
-    socketio.emit('actualizar_estados', {
-        'guion_id': guion_id,
-        'estados': [{'id': i['id'], 'estado': i['estado']} for i in estados_validos]
-    })
+    # broadcast con la verdad completa del servidor (estados + relojes)
+    socketio.emit('actualizar_estados', _estados_para_cliente(guion_id))
     return jsonify({'success': True})
 
 
@@ -155,9 +172,7 @@ def ver_log(guion_id):
 
 @bp.route('/api/estado-actual/<int:guion_id>')
 def estado_actual(guion_id):
-    envivo_model = EnVivoModel()
-    estados = envivo_model.obtener_estado_actual(guion_id)
-    return jsonify({'estados': [{'id': r['id'], 'estado': r['estado']} for r in estados]})
+    return jsonify(_estados_para_cliente(guion_id))
 
 
 @bp.route('/api/guiones-por-fecha', methods=['POST'])

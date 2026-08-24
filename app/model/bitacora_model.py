@@ -1,6 +1,9 @@
 import json
+import logging
 from app.database import Database
 from app.model.auth_model import UsuarioModel
+
+logger = logging.getLogger(__name__)
 
 
 class ActividadModel:
@@ -63,6 +66,7 @@ class ActividadModel:
             self._cargar_nombres_usuario(items)
             return items
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def _extraer_detalle(self, detalle):
@@ -98,6 +102,7 @@ class ActividadModel:
                 )
                 return self._get_db(), cur.lastrowid
         except Exception:
+            logger.exception('Error de base de datos')
             return None, None
 
     def obtener_modulos_distintos(self):
@@ -107,6 +112,7 @@ class ActividadModel:
                 cur.execute("SELECT DISTINCT modulo FROM actividad_usuario WHERE modulo IS NOT NULL")
                 return [r['modulo'] for r in cur.fetchall()]
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_acciones_distintas(self):
@@ -116,6 +122,7 @@ class ActividadModel:
                 cur.execute("SELECT DISTINCT tipo_accion FROM actividad_usuario WHERE tipo_accion IS NOT NULL")
                 return [r['tipo_accion'] for r in cur.fetchall()]
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_usuarios_distintos(self):
@@ -131,6 +138,7 @@ class ActividadModel:
                 )
                 return [{'id': r['usuario_id'], 'nombre': r['nombre']} for r in cur.fetchall()]
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
 
@@ -170,6 +178,7 @@ class SesionModel:
             self._cargar_nombres_usuario(items)
             return items
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id_registro):
@@ -179,6 +188,7 @@ class SesionModel:
                 cur.execute("SELECT * FROM sesiones_usuario WHERE id = %s", (id_registro,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def registrar(self, datos):
@@ -191,6 +201,7 @@ class SesionModel:
                 )
                 return self.obtener_por_id(cur.lastrowid)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def cerrar_sesion(self, sesion_id):
@@ -211,6 +222,7 @@ class SesionModel:
                 )
             return self.obtener_por_id(sesion_id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def cerrar_sesiones_abandonadas(self):
@@ -223,6 +235,7 @@ class SesionModel:
                 )
             return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
 
@@ -254,4 +267,5 @@ class CambioModel:
                 cur.execute(sql, params)
                 return list(cur.fetchall())
         except Exception:
+            logger.exception('Error de base de datos')
             return []

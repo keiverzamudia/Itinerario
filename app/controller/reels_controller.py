@@ -5,7 +5,6 @@ from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import REELS
 from app.model.reels_model import ReelModel, VideoModel
 from app.model.patrocinador_model import PatrocinadorModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('reels', __name__, url_prefix='/reels')
 
@@ -13,18 +12,8 @@ bp.before_request(verificar_acceso(REELS))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'reels',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('reels', tipo, accion, detalle)
 
 
 def _patrocinadores_select():

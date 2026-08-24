@@ -1,6 +1,9 @@
 from app.database import Database
+import logging
 
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 PERMISOS_CATALOGO = [
     {'codigo': 'dashboard.view', 'nombre': 'Ver panel principal', 'modulo': 'Dashboard'},
@@ -106,6 +109,7 @@ class RolModel(ValidacionesMixin):
                 )
                 return cur.lastrowid
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def consultar(self, **filtros):
@@ -121,6 +125,7 @@ class RolModel(ValidacionesMixin):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_nombre(self, nombre):
@@ -130,6 +135,7 @@ class RolModel(ValidacionesMixin):
                 cur.execute("SELECT * FROM roles WHERE nombre = %s", (nombre,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def listar_usuarios_con_roles(self):
@@ -145,6 +151,7 @@ class RolModel(ValidacionesMixin):
                 """)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_datos_dashboard(self):
@@ -163,6 +170,7 @@ class RolModel(ValidacionesMixin):
                 'total_permisos': total_permisos,
             }
         except Exception:
+            logger.exception('Error de base de datos')
             return {'total_roles': 0, 'total_usuarios': 0, 'total_permisos': 0}
 
     def _asegurar_schema(self):
@@ -173,13 +181,13 @@ class RolModel(ValidacionesMixin):
                     try:
                         cur.execute(f"ALTER TABLE {tabla} ADD PRIMARY KEY (id)")
                     except Exception:
-                        pass
+                        logger.exception('Error de base de datos')
                     try:
                         cur.execute(f"ALTER TABLE {tabla} MODIFY id int(11) NOT NULL AUTO_INCREMENT")
                     except Exception:
-                        pass
+                        logger.exception('Error de base de datos')
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def _asegurar_permisos_roles(self, roles, permiso_model):
         rol_permiso_model = RolPermisoModel()
@@ -237,6 +245,7 @@ class PermisoModel:
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id):
@@ -246,6 +255,7 @@ class PermisoModel:
                 cur.execute("SELECT * FROM permisos WHERE id = %s", (id,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def obtener_por_codigo(self, codigo):
@@ -255,6 +265,7 @@ class PermisoModel:
                 cur.execute("SELECT * FROM permisos WHERE codigo = %s", (codigo,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def obtener_por_modulos(self):
@@ -274,6 +285,7 @@ class PermisoModel:
                 )
                 return self.obtener_por_id(cur.lastrowid)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def modificar(self, id, datos):
@@ -291,6 +303,7 @@ class PermisoModel:
                 cur.execute(f"UPDATE permisos SET {', '.join(sets)} WHERE id = %s", params)
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def eliminar(self, id):
@@ -299,7 +312,7 @@ class PermisoModel:
             with db.cursor() as cur:
                 cur.execute("DELETE FROM permisos WHERE id = %s", (id,))
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
 
 class RolPermisoModel:
@@ -324,6 +337,7 @@ class RolPermisoModel:
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_rol(self, rol_id):
@@ -339,6 +353,7 @@ class RolPermisoModel:
                 cur.execute(sql, (rol_id,))
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def registrar(self, datos):
@@ -350,7 +365,7 @@ class RolPermisoModel:
                     (datos['rol_id'], datos['permiso_id'])
                 )
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def eliminar(self, id):
         try:
@@ -358,7 +373,7 @@ class RolPermisoModel:
             with db.cursor() as cur:
                 cur.execute("DELETE FROM rol_permiso WHERE id = %s", (id,))
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def actualizar_permisos(self, permiso_ids):
         try:
@@ -372,6 +387,7 @@ class RolPermisoModel:
                     )
                 return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_rol_con_permisos(self, rol_id):
@@ -390,6 +406,7 @@ class RolPermisoModel:
                 row['permisos'] = cur.fetchall()
                 return row
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
 
@@ -409,6 +426,7 @@ class UsuarioPermisoModel:
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_usuario(self, usuario_id):
@@ -424,6 +442,7 @@ class UsuarioPermisoModel:
                 cur.execute(sql, (usuario_id,))
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def registrar(self, datos):
@@ -435,7 +454,7 @@ class UsuarioPermisoModel:
                     (datos['usuario_id'], datos['permiso_id'])
                 )
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def eliminar(self, id):
         try:
@@ -443,7 +462,7 @@ class UsuarioPermisoModel:
             with db.cursor() as cur:
                 cur.execute("DELETE FROM usuario_permiso WHERE id = %s", (id,))
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def sincronizar_usuario_permisos(self, usuario_id, permiso_ids, permiso_ids_rol):
         try:
@@ -471,6 +490,7 @@ class UsuarioPermisoModel:
                     )
                 return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_permisos_usuario(self, usuario_id, rol_nombre):
@@ -488,6 +508,7 @@ class UsuarioPermisoModel:
                 cur.execute(sql, (rol_nombre, usuario_id))
                 return {r['codigo'] for r in cur.fetchall()}
         except Exception:
+            logger.exception('Error de base de datos')
             return set()
 
     def actualizar_permisos(self, usuario_id, permiso_ids):
@@ -516,6 +537,7 @@ class UsuarioPermisoModel:
                     )
                 return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_usuario_con_permisos(self, usuario_id):
@@ -539,6 +561,7 @@ class UsuarioPermisoModel:
                 row['permisos_extra'] = cur.fetchall()
                 return row
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
 
@@ -553,6 +576,7 @@ class DashboardVisibilidadModel:
                 cur.execute("SELECT * FROM dashboard_visibilidad WHERE rol_id = %s", (rol_id,))
                 return {r['modulo_key']: r for r in cur.fetchall()}
         except Exception:
+            logger.exception('Error de base de datos')
             return {}
 
     def obtener_modulos_visibles_rol(self, rol_id):
@@ -565,6 +589,7 @@ class DashboardVisibilidadModel:
                 )
                 return {r['modulo_key'] for r in cur.fetchall()}
         except Exception:
+            logger.exception('Error de base de datos')
             return set()
 
     def guardar_para_rol(self, rol_id, modulos_visibles):
@@ -580,6 +605,7 @@ class DashboardVisibilidadModel:
                     )
                 return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_por_usuario(self, usuario_id):
@@ -592,6 +618,7 @@ class DashboardVisibilidadModel:
                 )
                 return {r['modulo_key']: r for r in cur.fetchall()}
         except Exception:
+            logger.exception('Error de base de datos')
             return {}
 
     def obtener_modulos_visibles_usuario(self, usuario_id):
@@ -604,6 +631,7 @@ class DashboardVisibilidadModel:
                 )
                 return {r['modulo_key'] for r in cur.fetchall()}
         except Exception:
+            logger.exception('Error de base de datos')
             return set()
 
     def guardar_para_usuario(self, usuario_id, modulos_visibles):
@@ -622,6 +650,7 @@ class DashboardVisibilidadModel:
                     )
                 return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_modulos_visibles_final(self, usuario_id, rol_nombre):
@@ -640,6 +669,7 @@ class DashboardVisibilidadModel:
                         modulos.discard(mk)
             return modulos
         except Exception:
+            logger.exception('Error de base de datos')
             return set(MODULOS_DASHBOARD)
 
 

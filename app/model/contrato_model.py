@@ -1,6 +1,9 @@
 from app.database import Database
+import logging
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class ContratoModel(ValidacionesMixin, CrudInterface):
@@ -89,6 +92,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 self._id_contrato = cur.lastrowid
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def consultar(self, activos=True):
@@ -105,6 +109,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id_contrato):
@@ -118,6 +123,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (id_contrato,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def confirmar_modificacion(self, id):
@@ -139,6 +145,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 ))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def confirmar_eliminacion(self, id):
@@ -152,6 +159,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 cur.execute("UPDATE contrato SET estado = 0 WHERE id_contrato = %s", (id,))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_patrocinadores(self):
@@ -163,4 +171,5 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []

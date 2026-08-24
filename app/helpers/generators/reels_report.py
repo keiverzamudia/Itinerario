@@ -26,13 +26,14 @@ class ReelsReport(BaseReportGenerator):
             fontSize=8, fontName='Helvetica-Bold', textColor=colors.HexColor('#475569'),
             spaceBefore=2, spaceAfter=2)
 
-    def generate(self, datos, filtros=None, kpis=None):
+    def generate(self, datos, filtros=None, kpis=None, opciones=None):
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
         story = []
         story.extend(self._header(filtros))
         if kpis:
             story.extend(self._seccion_kpis(kpis))
+        story.extend(self._secciones_analisis(kpis, opciones))
         if not datos:
             story.append(Paragraph("<font color='#64748b'>No hay reels para mostrar.</font>", self.style_normal))
         else:

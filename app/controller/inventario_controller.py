@@ -4,7 +4,6 @@ from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import INVENTARIO
 from app.model.inventario_model import InventarioModel, TipoRecursoModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('inventario', __name__, url_prefix='/inventario')
 
@@ -12,18 +11,8 @@ bp.before_request(verificar_acceso(INVENTARIO))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'inventario',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('inventario', tipo, accion, detalle)
 
 
 # ──────────────────────────────────────────────
