@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
@@ -205,8 +206,13 @@ def asignar(recurso_id):
         notas = request.form.get('notas', '').strip()
 
         errores = []
-        if not usuario_id:
+        if not usuario_id or not usuario_id.isdigit():
             errores.append('Debe seleccionar un usuario')
+        if fecha_devolucion:
+            try:
+                date.fromisoformat(fecha_devolucion)
+            except ValueError:
+                errores.append('La fecha de devolución no es válida')
         if obj_model.obtener_asignacion_activa(recurso_id):
             errores.append('El recurso ya est\u00e1 asignado actualmente')
         if recurso['estado_id'] != 1:
@@ -243,10 +249,15 @@ def asignar_desde_gestion():
     notas = request.form.get('notas', '').strip()
 
     errores = []
-    if not recurso_id:
+    if not recurso_id or not recurso_id.isdigit():
         errores.append('Debe seleccionar un recurso')
-    if not usuario_id:
+    if not usuario_id or not usuario_id.isdigit():
         errores.append('Debe seleccionar un usuario')
+    if fecha_devolucion:
+        try:
+            date.fromisoformat(fecha_devolucion)
+        except ValueError:
+            errores.append('La fecha de devolución no es válida')
 
     if not errores:
         obj_model.set_id_activo(int(recurso_id))

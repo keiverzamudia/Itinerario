@@ -124,7 +124,7 @@ class MantenimientoModel(ValidacionesMixin):
             return False
         if not self.validar_obligatorio(self.__usuario_id, 'Usuario'):
             return False
-        if not self.validar_obligatorio(self.__fecha_ingreso, 'Fecha de ingreso'):
+        if not self.validar_fecha(self.__fecha_ingreso, 'Fecha de ingreso'):
             return False
         if not self.validar_obligatorio(self.__diagnostico, 'Diagnostico'):
             return False

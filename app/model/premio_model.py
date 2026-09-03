@@ -41,10 +41,14 @@ class PremioModel(ValidacionesMixin, CrudInterface):
 
     def _validar_datos_premio(self) -> bool:
         self.limpiar_errores()
-        datos = {'nombre': self.__nombre}
-        if not self.validar_obligatorios(['nombre'], datos):
+        datos = {'nombre': self.__nombre, 'id_patrocinador': self.__id_patrocinador}
+        if not self.validar_obligatorios(['nombre', 'id_patrocinador'], datos):
             return False
         if not self.validar_longitud(self.__nombre, 2, 50, 'Nombre'):
+            return False
+        if not self.validar_entero_positivo(self.__id_patrocinador, 'Patrocinador'):
+            return False
+        if self.__descripcion and not self.validar_longitud(self.__descripcion, 1, 500, 'Descripción'):
             return False
         return True
 

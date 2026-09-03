@@ -146,17 +146,18 @@ def crear():
         r_model.set_nombre(nombre)
         id_rol = r_model.confirmar_registro()
         if id_rol and permiso_ids:
-            from app.database import Database
-            db = Database.get_connection('seguridad')
+            from app.database import transaction
             try:
-                with db.cursor() as cur:
-                    for pid in permiso_ids:
-                        cur.execute(
-                            "INSERT INTO rol_permiso (rol_id, permiso_id) VALUES (%s, %s)",
-                            (id_rol, pid),
-                        )
+                pids_validos = [int(pid) for pid in permiso_ids if str(pid).isdigit()]
+                with transaction('seguridad') as conn:
+                    with conn.cursor() as cur:
+                        for pid in pids_validos:
+                            cur.execute(
+                                "INSERT INTO rol_permiso (rol_id, permiso_id) VALUES (%s, %s)",
+                                (id_rol, pid),
+                            )
             except Exception:
-                logger.exception('Error no controlado')
+                logger.exception('Error insertando permisos del rol')
         if id_rol:
             _registrar_bitacora('create', 'Crear rol', f'Rol "{nombre}" creado')
             flash('Rol creado correctamente', 'success')

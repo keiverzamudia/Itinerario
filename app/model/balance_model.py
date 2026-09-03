@@ -19,7 +19,7 @@ class Pago(Database, ValidacionesMixin):
                  referencia=None, fecha_pago=None, hora_pago=None,
                  registrado_por=None, descripcion=None, estado=0,
                  fecha_registro=None, **kwargs):
-        
+
         # Atributos encapsulados / privados (con doble guion bajo)
         self.__id_pago = id_pago
         self.__id_contrato = id_contrato
@@ -33,6 +33,7 @@ class Pago(Database, ValidacionesMixin):
         self.__estado = estado
         self.__fecha_registro = fecha_registro
         self.__nombre_patrocinador = kwargs.get('nombre_patrocinador', None)
+        self.__id_patrocinador = kwargs.get('id_patrocinador', None)
 
   
     @property
@@ -64,6 +65,9 @@ class Pago(Database, ValidacionesMixin):
     
     @property
     def nombre_patrocinador(self): return self.__nombre_patrocinador
+
+    @property
+    def id_patrocinador(self): return self.__id_patrocinador
 
   
     
@@ -155,19 +159,31 @@ class Pago(Database, ValidacionesMixin):
             logger.exception(f"Error en get_total_pagado_general: {e}")
             return 0.0
 
-    def obtener_historial_pagos(self, limit=100):
+    def obtener_historial_pagos(self, limit=100, fecha_inicio=None, fecha_fin=None,
+                                tipo_pago=None):
         try:
             db = self._get_db()
-            with db.cursor() as cur:
-                cur.execute("""
-                    SELECT p.*, COALESCE(pat.nombre_empresa, 'Sin patrocinador') as nombre_patrocinador
+            sql = """
+                    SELECT p.*, c.id_patrocinador,
+                           COALESCE(pat.nombre_empresa, 'Sin patrocinador') as nombre_patrocinador
                     FROM pagos p
                     LEFT JOIN contrato c ON p.id_contrato = c.id_contrato
                     LEFT JOIN patrocinadores pat ON c.id_patrocinador = pat.id_patrocinador
-                    WHERE p.estado = 0
-                    ORDER BY p.fecha_registro DESC
-                    LIMIT %s
-                """, (limit,))
+                    WHERE p.estado = 0"""
+            params = []
+            if fecha_inicio:
+                sql += " AND p.fecha_pago >= %s"
+                params.append(fecha_inicio)
+            if fecha_fin:
+                sql += " AND p.fecha_pago <= %s"
+                params.append(fecha_fin)
+            if tipo_pago:
+                sql += " AND p.tipo_pago = %s"
+                params.append(tipo_pago)
+            sql += " ORDER BY p.fecha_registro DESC LIMIT %s"
+            params.append(limit)
+            with db.cursor() as cur:
+                cur.execute(sql, params)
                 # Convierte las filas en instancias de la clase Pago
                 return [Pago(**r) for r in cur.fetchall()]
         except Exception as e:
@@ -212,6 +228,9 @@ class Pago(Database, ValidacionesMixin):
             return []
 
     def modificar_pago(self, pago_id, datos):
+        if 'monto' in datos and not self.validar_monto(datos['monto']):
+            logger.warning('Validación rechazada: El monto debe ser numérico y mayor a 0.')
+            return None
         try:
             pago = self.obtener_pago_por_id(pago_id)
             if not pago:

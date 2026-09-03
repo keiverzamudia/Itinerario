@@ -91,6 +91,14 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 return False
             if not self.validar_fecha_no_futura(self.__fecha_compra, 'Fecha de compra'):
                 return False
+        if self.__costo is not None and str(self.__costo).strip() != '':
+            try:
+                if float(self.__costo) <= 0:
+                    self.errores.append('El campo Costo debe ser mayor a 0')
+                    return False
+            except (ValueError, TypeError):
+                self.errores.append('El campo Costo debe ser numérico')
+                return False
         return True
 
     # ---- CRUD RECURSOS (estilo PHP) ----

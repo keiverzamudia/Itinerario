@@ -59,17 +59,20 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
         }
         if not self.validar_obligatorios(['id_patrocinador', 'fecha_inicio', 'fecha_fin', 'tipo'], datos):
             return False
-        if self._fecha_fin and self._fecha_inicio and self._fecha_fin < self._fecha_inicio:
-            self._errores.append('La fecha de fin no puede ser anterior a la fecha de inicio')
+        if not self.validar_fecha(self._fecha_inicio, 'Fecha de inicio') or \
+           not self.validar_fecha(self._fecha_fin, 'Fecha de fin'):
+            return False
+        if self._fecha_fin < self._fecha_inicio:
+            self.errores.append('La fecha de fin no puede ser anterior a la fecha de inicio')
             return False
         if self._monto_total is not None:
             try:
                 monto = float(self._monto_total)
                 if monto <= 0:
-                    self._errores.append('El monto debe ser mayor a 0')
+                    self.errores.append('El monto debe ser mayor a 0')
                     return False
             except (ValueError, TypeError):
-                self._errores.append('El monto no es valido')
+                self.errores.append('El monto no es valido')
                 return False
         return True
 

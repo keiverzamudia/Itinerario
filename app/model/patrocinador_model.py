@@ -68,6 +68,10 @@ class PatrocinadorModel(ValidacionesMixin, CrudInterface):
             return False
         if not self.validar_longitud(self.__nombre_empresa, 2, 150, 'Nombre de empresa'):
             return False
+        if not self.validar_rif(self.__rif):
+            return False
+        if not self.validar_email(self.__email):
+            return False
         return True
 
     def confirmar_registro(self):

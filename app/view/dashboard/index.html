@@ -7,7 +7,7 @@
 <div class="dash-wrap">
 
   <div class="dash-header">
-    <h1><i class="fas fa-crown me-2" style="color:var(--damber);"></i>Dashboard</h1>
+    <h1><i class="fas fa-crown me-2 hi-amber"></i>Dashboard</h1>
     <p>Panel de control del sistema</p>
     <div class="accent-line"></div>
   </div>
@@ -36,7 +36,7 @@
     </div>
 
     {% if 'tarea' in modulos_visibles %}
-    <a href="{{ url_for('gestion_tarea.tareas_usuario') }}" class="kpi-card kpi-amber" style="text-decoration:none;color:inherit;">
+    <a href="{{ url_for('gestion_tarea.tareas_usuario') }}" class="kpi-card kpi-amber">
       <div class="kpi-icon"><i class="fas fa-tasks"></i></div>
       <div class="kpi-label">Mis Tareas Pendientes</div>
       <div class="kpi-value">{{ metricas.tarea.pendientes }}</div>
@@ -56,13 +56,13 @@
 
   <div class="production-panel">
     <div class="panel-header">
-      <h5><i class="fas fa-film me-2" style="color:var(--dblue);"></i>Panel de Producción</h5>
+      <h5><i class="fas fa-film me-2 hi-blue"></i>Panel de Producción</h5>
     </div>
     <div class="panel-body">
       {% if live.activo %}
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <div class="prod-live-row">
         <span class="prod-live-badge"><span class="live-pulse"></span>Transmitiendo ahora</span>
-        <a href="{{ url_for('en_vivo.ver', guion_id=live.id) }}" class="btn btn-sm" style="background:var(--dblue);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:600;padding:6px 16px;">
+        <a href="{{ url_for('en_vivo.ver', guion_id=live.id) }}" class="btn btn-sm dash-btn">
           <i class="fas fa-external-link-alt me-1"></i>Ir a En Vivo
         </a>
       </div>
@@ -98,8 +98,8 @@
       </div>
       {% endif %}
 
-      <div class="prod-meta" style="margin-bottom:0;">
-        <a href="{{ url_for('guion.dashboard') }}" style="color:var(--dblue);font-size:0.8rem;text-decoration:none;">
+      <div class="prod-meta">
+        <a href="{{ url_for('guion.dashboard') }}" class="prod-meta-link">
           <i class="fas fa-arrow-right me-1"></i>Gestionar guiones
         </a>
       </div>
@@ -108,7 +108,7 @@
         <div class="prod-idle-icon"><i class="fas fa-pause-circle"></i></div>
         <h5>Sin producción activa</h5>
         <p>No hay ningún guión transmitiéndose en este momento.</p>
-        <a href="{{ url_for('guion.dashboard') }}" class="btn btn-sm" style="background:var(--dblue);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:600;padding:7px 20px;">
+        <a href="{{ url_for('guion.dashboard') }}" class="btn btn-sm dash-btn">
           <i class="fas fa-plus me-1"></i>Ir a Guiones
         </a>
       </div>
@@ -179,7 +179,7 @@
         <div class="mod-name">Balance</div>
       </div>
       <div class="mod-stats">
-        <div class="mod-stat" style="flex:2;">
+        <div class="mod-stat mod-stat--wide">
           <div class="mod-stat-val">${{ "{:,.0f}".format(metricas.balance.total_pagado) }}</div>
           <div class="mod-stat-lbl">Total pagado</div>
         </div>
@@ -207,7 +207,7 @@
         <div class="mod-name">Patrocinantes</div>
       </div>
       <div class="mod-stats">
-        <div class="mod-stat" style="flex:2;">
+        <div class="mod-stat mod-stat--wide">
           <div class="mod-stat-val">{{ metricas.patrocinador.activos }}</div>
           <div class="mod-stat-lbl">Activos</div>
         </div>
@@ -248,7 +248,7 @@
         <div class="mod-name">Reels</div>
       </div>
       <div class="mod-stats">
-        <div class="mod-stat" style="flex:2;">
+        <div class="mod-stat mod-stat--wide">
           <div class="mod-stat-val">{{ metricas.reels.total }}</div>
           <div class="mod-stat-lbl">Total</div>
         </div>
@@ -263,7 +263,7 @@
         <div class="mod-name">Roles</div>
       </div>
       <div class="mod-stats">
-        <div class="mod-stat" style="flex:2;">
+        <div class="mod-stat mod-stat--wide">
           <div class="mod-stat-val">{{ metricas.rol.roles }}</div>
           <div class="mod-stat-lbl">Roles</div>
         </div>
@@ -276,21 +276,21 @@
     {% if 'actividad' in modulos_visibles %}
     <div class="activity-card">
       <div class="card-header">
-        <h6><i class="fas fa-history me-2" style="color:var(--dblue);"></i>Actividad Reciente</h6>
+        <h6><i class="fas fa-history me-2 hi-blue"></i>Actividad Reciente</h6>
         <a href="{{ url_for('bitacora.dashboard') }}">Ver todas →</a>
       </div>
       {% if actividad %}
       <ul class="activity-list" id="activity-list">
         {% for act in actividad %}
         <li class="activity-item{% if loop.index > 5 %} activity-hidden{% endif %}">
-          <div class="activity-dot" style="background:{% if act.tipo_accion == 'create' %}rgba(16,185,129,0.1);color:var(--dgreen){% elif act.tipo_accion == 'update' %}rgba(37,99,235,0.1);color:var(--dblue){% elif act.tipo_accion == 'delete' %}rgba(239,68,68,0.1);color:var(--dred){% elif act.tipo_accion == 'login' %}rgba(99,102,241,0.1);color:var(--dindigo){% else %}rgba(168,162,158,0.15);color:var(--dtext-muted){% endif %}">
+          <div class="activity-dot {% if act.tipo_accion == 'create' %}act-dot-create{% elif act.tipo_accion == 'update' %}act-dot-update{% elif act.tipo_accion == 'delete' %}act-dot-delete{% elif act.tipo_accion == 'login' %}act-dot-login{% else %}act-dot-otro{% endif %}">
             <i class="fas {% if act.tipo_accion == 'create' %}fa-plus{% elif act.tipo_accion == 'update' %}fa-pen{% elif act.tipo_accion == 'delete' %}fa-trash{% elif act.tipo_accion == 'login' %}fa-sign-in-alt{% else %}fa-circle{% endif %}"></i>
           </div>
           <div class="activity-body">
             <div class="act-user">{{ act.usuario.nombre if act.usuario else 'Desconocido' }}</div>
             <div class="act-action">
               {% if act.accion %}{{ act.accion }}{% else %}{{ act.tipo_accion }}{% endif %}
-              <span class="badge" style="background:rgba(0,0,0,0.04);color:var(--dtext-sec);margin-left:6px;">{{ act.modulo }}</span>
+              <span class="badge act-modulo-badge">{{ act.modulo }}</span>
             </div>
             <div class="act-time">{{ act.created_at.strftime('%d/%m %H:%M') if act.created_at else '' }}</div>
           </div>
@@ -316,8 +316,8 @@
     {% if 'enlinea' in modulos_visibles %}
     <div class="online-card">
       <div class="card-header">
-        <h6><i class="fas fa-user-friends me-2" style="color:var(--dgreen);"></i>En Línea</h6>
-        <span class="online-count-badge" style="font-size:0.78rem;font-weight:600;color:var(--dtext-sec);">{{ usuarios_en_linea }}</span>
+        <h6><i class="fas fa-user-friends me-2 hi-green"></i>En Línea</h6>
+        <span class="online-count-badge online-count-sub">{{ usuarios_en_linea }}</span>
       </div>
       {% if usuarios_info %}
       <ul class="online-list online-scroll" id="user-list">

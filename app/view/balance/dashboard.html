@@ -196,10 +196,10 @@
                             <!-- CORRECCIÓN: Botones alineados a la derecha y estilizados idénticos a image_120f7f.png -->
                             <td>
                                 <div class="action-group">
-                                    <button type="button" class="btn btn-action btn-action-edit btn-editar-pago" data-id="{{ pago.id_pago }}" title="Editar">
+                                    <button type="button" class="btn btn-action btn-action-edit btn-editar-pago" data-id="{{ pago.id_pago }}" title="Editar" aria-label="Editar pago">
                                         <i class="fas fa-pen"></i>
                                     </button>
-                                    <button type="button" class="btn btn-action btn-action-danger btn-eliminar-pago" data-id="{{ pago.id_pago }}" title="Eliminar">
+                                    <button type="button" class="btn btn-action btn-action-danger btn-eliminar-pago" data-id="{{ pago.id_pago }}" title="Eliminar" aria-label="Eliminar pago">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -276,7 +276,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Referencia / N° Comprobante</label>
-                            <input type="text" name="referencia" id="referencia" class="form-control" placeholder="Ej. 984214" maxlength="50" ...>
+                            <input type="text" name="referencia" id="referencia" class="form-control" placeholder="Ej. 984214" maxlength="50">
                         </div>
 
                         <div class="col-md-6">

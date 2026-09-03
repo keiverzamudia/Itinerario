@@ -98,3 +98,40 @@ Agregar `_seccion_distribucion` con los datos de distribución (tipos, estados, 
 - Fechas: `fecha_inicio`/`fecha_fin` siempre presentes
 - columnas preview: deben coincidir con lo que devuelve `_obtener_datos`
 - kpiCards keys: deben coincidir con las claves del dict `kpis`
+
+## Fase 5 — Constructor de Reportes (2026-08-25, EN CURSO)
+
+Arquitectura aprobada: `docs/ARQUITECTURA_CONSTRUCTOR_REPORTES.md`. Auditoría previa: `docs/AUDITORIA_REPORTES.md`.
+
+### ✅ F0 blindaje (hecho)
+- Whitelists de filtros por módulo en preview/generar (`FILTROS_PERMITIDOS` + `_filtros_del_request`, reportes_controller.py) — claves desconocidas se descartan y ya no llegan al header del PDF.
+- `_ordenar_datos` numérico (antes '100'<'20' string-wise) + tests.
+- balance: fechas/tipo_pago en SQL (`obtener_historial_pagos(limit, fecha_inicio, fecha_fin, tipo_pago)`), tope 2000, match patrocinador EXACTO vía `c.id_patrocinador` (muere el startswith); `Pago.id_patrocinador` nuevo property.
+- bitácora: fechas en SQL (fecha_desde/hasta), cap 5000 (antes 500 silencioso).
+- FIX no-op: filtro tareas `asignado_a` nunca filtraba (backend leía `usuario_id`) — ahora ambas claves.
+
+### ✅ F1 piloto (hecho): contratos + bitácora
+- `app/helpers/reportes_catalogo.py`: MODULO_BUILDER declarativo, FUENTES_SQL (FKs reales), SOFT_DELETE, DIMENSIONES/METRICAS/FILTROS_BUILDER con SQL calificado, FUENTE_ALIASES, `catalogo_publico()` (sirve sin SQL interno).
+- `app/helpers/reportes_constructor.py`: motor whitelistado → dataset genérico; buckets DATE_FORMAT; comparativa período anterior; LIMIT 500 visible vía meta.limit_alcanzado; ConstructorError→400.
+- Endpoints: GET /reportes/catalogo/<modulo>, POST /reportes/construir, POST /reportes/construir/exportar (pdf/csv).
+- `generators/constructor_report.py` (ConstructorReport) + wizard frontend `static/js/ReportesConstructor.js` (stepper; "Resumen general" delega al flujo clásico intacto).
+- Tests: tests/test_reportes_constructor.py (11) — consistencia catálogo, anti-inyección, 400s, CSV/PDF.
+
+### Pendiente (fases siguientes del plan)
+- Extender MODULO_BUILDER al resto de módulos (balance→mantenimiento→premios→guiones→resto; antes matar N+1 mantenimiento/reels).
+- Contrato `opciones` PDF completo (skill reportes-pdf) + refactor boilerplate generadores (D5).
+- Plantillas guardadas (requiere decisión de migración BD) e índices de fecha.
+
+### ✅ FASE 1 — Capa de configuración declarativa (2026-08-25, hecha)
+- `reportes_catalogo.py` ampliado a 11 módulos con constructor (todos menos `resumen`, inhabilitado por bug latente): guiones(produccion/evolucion), inventario(valorizacion/asignaciones_cat), premios(entregas_stock), balance(cobranza), tareas(carga), patrocinadores(cartera_pat), usuarios(planta), mantenimiento(taller), reels(contenido).
+- Nuevos registros: FUENTE_SCHEMA (conexión por fuente), FUENTE_ALIASES ampliados, SOFT_DELETE por fuente, filtros con UI declarativa (`opciones` estáticas o `ajax` {url,clave,param,depende_de} → reutilizan los endpoints legacy /filtros/*), métricas con `sin_agg` para agregaciones embebidas (% completadas) y expresiones DATEDIFF/CASE.
+- Motor: conexión por FUENTE_SCHEMA; límite configurable por categoría (`cat['limite']`).
+- Wizard JS: pasoFiltros pinta selects desde catálogo y recarga destinos por `depende_de` (progresividad declarativa sin tocar handlers legacy).
+- Tests: test_reportes_constructor.py ahora 23 (consistencia global de alias/esquema/soft-delete/resumen-legado + un caso de ejecución por módulo). Suite total: 101 passed.
+
+### ✅ FASE 2 — Constructor visual (2026-08-25, hecha)
+- `ReportesConstructor.js` reescrito como asistente por pasos: Análisis → Dimensión (+grano temporal) → Filtros → Métricas → Visualización/Comparación → Resultado. Chips de progreso (done/active), footer Atrás/Siguiente→Generar.
+- Renderizadores SIN dependencias: tabla, barras CSS, torta conic-gradient con leyenda %, línea SVG (solo se ofrece si la dimensión es temporal; orden cronológico).
+- KPI cards de totales + fila Total en tabla + aviso de truncado + exportar CSV/PDF + "Ajustar"/"Nuevo análisis".
+- `dashboard.html`: tarjeta #wizardCard con estilos .wiz-* propios (tokens del sistema); el grid clásico y su panel quedan intactos — "Resumen general" delega al flujo de siempre.
+- Data-driven desde reportes_catalogo.py: los 11 módulos con constructor funcionan sin JS por módulo.

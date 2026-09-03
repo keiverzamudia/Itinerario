@@ -1,7 +1,7 @@
 import json
 import logging
 import io
-from datetime import datetime, date
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_login import current_user
 from app.model.balance_model import Pago as BalanceModel
@@ -92,7 +92,7 @@ def registrar_pago():
     hora_pago = request.form.get('hora_pago')
     notas = request.form.get('descripcion')
 
-    if not id_contrato or not monto or not tipo_pago:
+    if not id_contrato or not str(id_contrato).isdigit() or not monto or not tipo_pago:
         flash('Todos los campos obligatorios deben ser llenados', 'danger')
         return redirect(url_for('balance.dashboard'))
 
@@ -109,8 +109,8 @@ def registrar_pago():
         fecha_pago_dt = datetime.strptime(fecha_pago, '%Y-%m-%d').date()
         hora_pago_dt = datetime.strptime(hora_pago, '%H:%M').time()
     except (ValueError, TypeError):
-        fecha_pago_dt = date.today()
-        hora_pago_dt = datetime.now().time()
+        flash('Fecha u hora de pago inválida', 'danger')
+        return redirect(url_for('balance.dashboard'))
 
     contrato = balance_model.obtener_contrato_por_id(int(id_contrato))
     if not contrato:
@@ -151,19 +151,40 @@ def editar_pago():
     hora_pago = request.form.get('hora_pago')
     notas = request.form.get('descripcion')
 
-    if not pago_id or not monto or not tipo_pago:
+    if not pago_id or not str(pago_id).isdigit() or not monto or not tipo_pago:
         flash('Faltan datos obligatorios', 'danger')
+        return redirect(url_for('balance.dashboard'))
+
+    try:
+        monto_float = float(monto)
+        if monto_float <= 0:
+            flash('El monto debe ser mayor a cero', 'danger')
+            return redirect(url_for('balance.dashboard'))
+    except ValueError:
+        flash('Monto inválido', 'danger')
         return redirect(url_for('balance.dashboard'))
 
     try:
         fecha_pago_dt = datetime.strptime(fecha_pago, '%Y-%m-%d').date()
         hora_pago_dt = datetime.strptime(hora_pago, '%H:%M').time()
     except (ValueError, TypeError):
-        fecha_pago_dt = date.today()
-        hora_pago_dt = datetime.now().time()
+        flash('Fecha u hora de pago inválida', 'danger')
+        return redirect(url_for('balance.dashboard'))
+
+    pago_actual = balance_model.obtener_pago_por_id(int(pago_id))
+    if not pago_actual:
+        flash('Pago no encontrado', 'danger')
+        return redirect(url_for('balance.dashboard'))
+
+    contrato = balance_model.obtener_contrato_por_id(pago_actual.id_contrato)
+    total_pagado = balance_model.get_total_pagado_by_contrato(pago_actual.id_contrato)
+    saldo_disponible = float(contrato['monto_total']) - total_pagado + float(pago_actual.monto or 0)
+    if monto_float > saldo_disponible:
+        flash(f'El monto excede el saldo disponible (${saldo_disponible:.2f})', 'danger')
+        return redirect(url_for('balance.dashboard'))
 
     datos = {
-        'monto': float(monto),
+        'monto': monto_float,
         'tipo_pago': tipo_pago,
         'referencia': referencia,
         'fecha_pago': fecha_pago_dt,

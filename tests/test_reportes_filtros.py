@@ -149,3 +149,30 @@ def test_preview_reels_rango_duracion(client, superadmin):
     alto = _preview(client, 'reels', duracion_min='9999999')
     assert alto['total'] == 0
     assert alto['total'] <= base['total']
+
+
+# ── blindaje F0: whitelists, fechas en SQL, filtro asignado_a ──────────
+def test_preview_filtro_desconocido_ignorado(client, superadmin):
+    # claves fuera de la whitelist no filtran ni revientan
+    base = _preview(client, 'contratos')
+    basura = _preview(client, 'contratos', campo_inventado='inyeccion')
+    assert basura['total'] == base['total']
+
+
+def test_preview_balance_fechas_filtran_en_sql(client, superadmin):
+    # fecha futura imposible → 0; antes el LIMIT 500 + refiltro Python truncaba
+    futuro = _preview(client, 'balance', fecha_inicio='2100-01-01')
+    assert futuro['total'] == 0
+
+
+def test_preview_bitacora_fechas_filtran_en_sql(client, superadmin):
+    futuro = _preview(client, 'bitacora', fecha_inicio='2100-01-01')
+    assert futuro['total'] == 0
+
+
+def test_preview_tareas_asignado_a_funciona(client, superadmin):
+    # regresión: el select enviaba 'asignado_a' pero el backend leía 'usuario_id' (no-op)
+    vacio = _preview(client, 'tareas', asignado_a='99999999')
+    assert vacio['total'] == 0
+    base = _preview(client, 'tareas')
+    assert vacio['total'] <= base['total']

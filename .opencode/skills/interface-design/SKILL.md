@@ -13,6 +13,10 @@ Build product interfaces with the craft of a top design team — Linear, Vercel,
 
 **Not for:** Landing pages, marketing sites, campaigns, brand-only work. Use a marketing/frontend design skill for those.
 
+## IMPORTANT — Stack context (Itinerario project)
+
+This project uses **Flask 3 + Jinja2 + Bootstrap 5.3 + jQuery + DataTables + vanilla CSS**. There is no build step, no React, no Tailwind, no component framework. Apply the **design principles** (hierarchy, tokens, craft, polish) from this skill, but **ignore the React-specific library recommendations** (Radix UI, shadcn, CVA, Tailwind, CSS-in-JS, Framer Motion). Use CSS custom properties and Bootstrap classes instead.
+
 This skill is self-contained: direction, visual hierarchy, design-system architecture, and the polish and motion essentials needed to ship production-grade UI all live here.
 
 ---

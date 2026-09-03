@@ -66,6 +66,12 @@ class ReelModel(ValidacionesMixin, CrudInterface):
             return False
         return True
 
+    def _validar_nombre(self, nombre) -> bool:
+        self.limpiar_errores()
+        if not self.validar_obligatorio(nombre, 'Nombre'):
+            return False
+        return self.validar_longitud(nombre, 2, 50, 'Nombre')
+
     def confirmar_registro(self):
         if not self._validar_datos_recurso():
             return False
@@ -87,6 +93,8 @@ class ReelModel(ValidacionesMixin, CrudInterface):
             return None
 
     def registrar(self, datos):
+        if not self._validar_nombre((datos.get('nombre') or '').strip()):
+            return None
         try:
             db = self._get_db()
             with db.cursor() as cur:
@@ -101,6 +109,8 @@ class ReelModel(ValidacionesMixin, CrudInterface):
 
     def modificar(self, id, datos):
         try:
+            if 'nombre' in datos and not self._validar_nombre((datos.get('nombre') or '').strip()):
+                return None
             sets = []
             params = []
             for campo in ['nombre', 'duracion_total']:

@@ -101,7 +101,19 @@ def _ordenar_datos(datos, campo, direccion='asc'):
     if not campo or not datos:
         return datos
     reverse = direccion == 'desc'
-    return sorted(datos, key=lambda d: str(d.get(campo, '')).lower(), reverse=reverse)
+
+    def _clave(d):
+        val = d.get(campo)
+        if isinstance(val, (int, float)) and not isinstance(val, bool):
+            return (0, float(val), '')
+        s = str(val if val is not None else '').strip().lower()
+        try:
+            # montos formateados ('$12,000'), porcentajes y números como texto ordenan numérico
+            return (0, float(s.replace('$', '').replace(',', '').replace('%', '')), '')
+        except ValueError:
+            return (1, 0.0, s)
+
+    return sorted(datos, key=_clave, reverse=reverse)
 
 
 def _fmt_video_dur(segundos):

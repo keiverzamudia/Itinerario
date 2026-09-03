@@ -57,6 +57,21 @@ def _procesar_videos_json(reel_id, videos_json):
         })
 
 
+def _parsear_segundos(texto):
+    # ponytail: fallback 0, igual que _procesar_videos_json
+    try:
+        return max(0, int(float(texto or 0)))
+    except (ValueError, TypeError):
+        return 0
+
+
+def _parsear_orden(texto, video_model, reel_id):
+    try:
+        return int(texto)
+    except (ValueError, TypeError):
+        return len(video_model.consultar_por_reel(reel_id)) + 1
+
+
 @bp.route('/', methods=['GET', 'POST'])
 def dashboard():
     reel_model = ReelModel()
@@ -164,8 +179,8 @@ def agregar_video(reel_id):
         return redirect(url_for('reels.ver', id=reel_id))
     video = video_model.registrar({
         'reel_id': reel_id, 'nombre': nombre,
-        'duracion_segundos': request.form.get('duracion_segundos', 0),
-        'orden': request.form.get('orden'),
+        'duracion_segundos': _parsear_segundos(request.form.get('duracion_segundos')),
+        'orden': _parsear_orden(request.form.get('orden'), video_model, reel_id),
     })
     if video:
         reel = ReelModel().obtener_por_id(reel_id)

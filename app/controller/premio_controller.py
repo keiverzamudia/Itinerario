@@ -110,7 +110,11 @@ def dashboard():
         if accion == 'entregar':
             if not current_user.tiene_permiso('premio.entregar'):
                 return jsonify({'error': 'No tienes permiso'}), 403
-            cantidad_entregar = int(request.form.get('cantidad_entregar', 1))
+            raw_cantidad = request.form.get('cantidad_entregar', '1')
+            raw_patrocinador = request.form.get('id_patrocinador')
+            if not str(raw_cantidad).isdigit() or not raw_patrocinador or not str(raw_patrocinador).isdigit():
+                return jsonify({'error': 'Cantidad o patrocinador inválido'}), 400
+            cantidad_entregar = int(raw_cantidad)
             p = obj_model.obtener_para_api(request.form.get('id_premio'))
             ok = obj_model.entregar(
                 request.form.get('id_premio'), request.form.get('id_patrocinador'),

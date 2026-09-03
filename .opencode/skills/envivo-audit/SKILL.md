@@ -16,7 +16,7 @@ Auditar el módulo EN VIVO **sin modificar nada**. La auditoría produce conocim
 5. Autenticación (Flask-Login) y permisos (`verificar_acceso(EN_VIVO)`; operar = `envivo.control`)
 6. Eventos socket: servidor emite `actualizar_estados` y `usuarios_actualizados`; cliente maneja `connect`/`reconnect`
 7. Datos reales: `duracion_estimada` en SEGUNDOS; `hora` es TIME→`timedelta` formateada server-side
-8. Estados: guion (`borrador/publicado/en_vivo/finalizado`) y elemento (`pendiente/en_curso/completado/reiniciado`)
+8. Estados: guion (`borrador/publicado/en_vivo/finalizado`) y elemento (`pendiente/en_curso/completado`)
 9. Timers/listeners actuales, localStorage (`vivo-theme`), tema dark/light, logo en `app/static/img/Logo-blanco.png`
 
 ## Regla dura

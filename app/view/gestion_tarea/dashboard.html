@@ -148,13 +148,13 @@
         <h6 class="modal-title fw-bold mb-0"><i class="fas fa-user-check me-2"></i> Asignar Tarea</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <form novalidate id="formAsignarTarea">
+      <form id="formAsignarTarea">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="asignar" value="true"/>
         <div class="modal-body p-4">
           <div class="mb-3">
             <label class="form-label fw-bold small text-dark">Tarea *</label>
-            <select name="id_tarea" class="form-select">
+            <select name="id_tarea" class="form-select" required>
               <option value="">Seleccione una tarea</option>
               {% for val, label in tareas_activas %}
               <option value="{{ val }}">{{ label }}</option>

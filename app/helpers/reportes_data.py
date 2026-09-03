@@ -3,7 +3,7 @@
 Cada función devuelve (datos, kpis) EXACTAMENTE como la rama que reemplaza
 del antiguo _obtener_datos; verificado contra línea base de previews.
 """
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import logging
 
 from app.helpers.reportes_utils import (
@@ -12,6 +12,7 @@ from app.helpers.reportes_utils import (
     _filtrar_por_fecha,
     _fmt_video_dur,
     _formatear_tiempo,
+    _parsear_fecha,
 )
 from app.model.guion_model import GuionModel, ElementoGuionModel
 from app.model.inventario_model import InventarioModel
@@ -147,12 +148,12 @@ def rango_fechas_defecto(modulo, filtros):
             'inventario': lambda: InventarioModel().consultar(),
             'premios': lambda: list(PremioModel().obtener_premios_pendientes()) + list(PremioModel().obtener_premios_entregados()),
             'contratos': lambda: ContratoModel().consultar(),
-            'balance': lambda: BalanceModel().obtener_historial_pagos(limit=500),
+            'balance': lambda: BalanceModel().obtener_historial_pagos(limit=2000),
             'tareas': lambda: TareaModel().consultar(),
             'patrocinadores': lambda: PatrocinadorModel().consultar(),
             'mantenimiento': lambda: MantenimientoModel().consultar(),
             'reels': lambda: ReelModel().consultar(),
-            'bitacora': lambda: ActividadModel().consultar(limite=500),
+            'bitacora': lambda: ActividadModel().consultar(limite=2000),
         }
         loader = model_map.get(modulo)
         if loader:
@@ -407,12 +408,20 @@ def _datos_contratos(filtros, fi, ff):
 def _datos_balance(filtros, fi, ff):
     modulo = 'balance'
     model = BalanceModel()
-    pagos = model.obtener_historial_pagos(limit=500)
+    # ponytail: fechas/tipo filtradas EN SQL; tope 2000 como salvaguarda visible en kpis
+    LIMITE = 2000
+    pagos = model.obtener_historial_pagos(
+        limit=LIMITE,
+        fecha_inicio=filtros.get('fecha_inicio'),
+        fecha_fin=filtros.get('fecha_fin'),
+        tipo_pago=filtros.get('tipo_pago'),
+    )
     datos = []
     for p in pagos:
         datos.append({
             'id_pago': p.id_pago,
             'id_contrato': p.id_contrato,
+            'id_patrocinador': p.id_patrocinador,
             'monto': float(p.monto) if p.monto else 0,
             'tipo_pago': p.tipo_pago or '',
             'referencia': p.referencia or '',
@@ -422,17 +431,16 @@ def _datos_balance(filtros, fi, ff):
             'fecha_registro': str(p.fecha_registro)[:10] if p.fecha_registro else '',
             'nombre_patrocinador': p.nombre_patrocinador or 'Sin patrocinador',
         })
-    if filtros.get('tipo_pago'):
-        datos = [d for d in datos if d.get('tipo_pago') == filtros['tipo_pago']]
     if filtros.get('patrocinador_id'):
-        datos = [d for d in datos if str(d.get('id_contrato', '')).startswith(str(filtros['patrocinador_id']))]
+        pid = str(filtros['patrocinador_id'])
+        # JOIN real: el id llega desde contrato vía obtener_historial_pagos (antes startswith)
+        datos = [d for d in datos if str(d.get('id_patrocinador') or '') == pid]
     if filtros.get('monto_min'):
         try: datos = [d for d in datos if d.get('monto', 0) >= float(filtros['monto_min'])]
         except ValueError: pass
     if filtros.get('monto_max'):
         try: datos = [d for d in datos if d.get('monto', 0) <= float(filtros['monto_max'])]
         except ValueError: pass
-    datos = _filtrar_por_fecha(datos, 'fecha_pago', fi, ff)
     total = sum(d.get('monto', 0) for d in datos)
     tipos = {}
     for d in datos:
@@ -486,8 +494,10 @@ def _datos_tareas(filtros, fi, ff):
     # claves unificadas en minúscula (antes: 'Estado' con mayúscula, inconsistente)
     if filtros.get('estado'):
         datos = [d for d in datos if d.get('estado') == filtros['estado']]
-    if filtros.get('usuario_id'):
-        datos = [d for d in datos if str(d.get('asignado_id') or '') == str(filtros['usuario_id'])]
+    # el JS envía 'asignado_a' (id de usuario); 'usuario_id' es la clave legacy
+    usuario_filtro = filtros.get('asignado_a') or filtros.get('usuario_id')
+    if usuario_filtro:
+        datos = [d for d in datos if str(d.get('asignado_id') or '') == str(usuario_filtro)]
     datos = _filtrar_por_fecha(datos, 'fecha_asignacion_tarea', fi, ff)
     pendientes = sum(1 for d in datos if d.get('estado') == 'Pendiente')
     en_progreso = sum(1 for d in datos if d.get('estado') == 'En Progreso')
@@ -652,17 +662,20 @@ def _datos_reels(filtros, fi, ff):
 def _datos_bitacora(filtros, fi, ff):
     modulo = 'bitacora'
     model = ActividadModel()
-    consulta_filtros = {'limite': 500}
+    # fechas y filtros van EN SQL (antes: LIMIT 500 + refiltro Python = truncado silencioso)
+    consulta_filtros = {'limite': 5000}
     if filtros.get('usuario_id'):
         consulta_filtros['usuario_id'] = filtros['usuario_id']
     if filtros.get('tipo_accion'):
         consulta_filtros['tipo_accion'] = filtros['tipo_accion']
     if filtros.get('modulo_filter'):
         consulta_filtros['modulo'] = filtros['modulo_filter']
+    if fi:
+        consulta_filtros['fecha_desde'] = fi
+    ff_dt = _parsear_fecha(ff)
+    if ff_dt:
+        consulta_filtros['fecha_hasta'] = ff_dt + timedelta(days=1)
     datos = model.consultar(**consulta_filtros)
-    fi = filtros.get('fecha_inicio')
-    ff = filtros.get('fecha_fin')
-    datos = _filtrar_por_fecha(datos, 'created_at', fi, ff)
     creaciones = sum(1 for d in datos if d.get('tipo_accion') == 'create')
     ediciones = sum(1 for d in datos if d.get('tipo_accion') == 'update')
     eliminaciones = sum(1 for d in datos if d.get('tipo_accion') == 'delete')

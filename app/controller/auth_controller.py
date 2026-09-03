@@ -139,8 +139,8 @@ def reset_password(token):
         password = request.form.get('password', '')
         confirm = request.form.get('confirm', '')
 
-        if len(password) < 8:
-            flash('La contrasena debe tener al menos 8 caracteres', 'danger')
+        if len(password) < 8 or len(password) > 30:
+            flash('La contrasena debe tener entre 8 y 30 caracteres', 'danger')
             return render_template('reset_password.html', token=token)
 
         if password != confirm:

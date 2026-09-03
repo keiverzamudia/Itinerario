@@ -69,6 +69,8 @@ class UsuarioModel(ValidacionesMixin, CrudInterface):
             return False
         if not self.validar_longitud(self.__email, 5, 150, 'Email'):
             return False
+        if not self.validar_email(self.__email):
+            return False
         if self.__cedula and not self.validar_longitud(self.__cedula, 6, 10, 'Cedula'):
             return False
         if self.__telefono and not self.validar_longitud(self.__telefono, 9, 16, 'Telefono'):

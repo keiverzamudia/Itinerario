@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta, date
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, Response, render_template, request, jsonify, send_file
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.model.reportes_model import ReporteModel
@@ -28,6 +28,33 @@ MODULOS_DISPONIBLES = {
     'reels': {'nombre': 'Reels', 'icono': 'fa-video'},
     'bitacora': {'nombre': 'Bitácora', 'icono': 'fa-history'},
 }
+
+# Whitelist de filtros aceptados por módulo (claves de request.form).
+# Claves fuera de este set se DESCARTAN: no filtran ni aparecen en el header del PDF.
+FECHAS = {'fecha_inicio', 'fecha_fin'}
+FILTROS_PERMITIDOS = {
+    'guiones': {'estado', 'encargado', 'elementos_min', 'elementos_max'},
+    'inventario': {'tipo_nombre', 'estado_nombre', 'costo_min', 'costo_max'},
+    'premios': {'estado', 'patrocinador_id', 'cantidad_min', 'cantidad_max',
+                'cantidad_entregada_min', 'cantidad_entregada_max'},
+    'contratos': {'tipo', 'estatus', 'patrocinador_id', 'monto_min', 'monto_max'},
+    'balance': {'tipo_pago', 'patrocinador_id', 'monto_min', 'monto_max'},
+    'tareas': {'estado', 'asignado_a', 'usuario_id'},  # usuario_id = clave legacy
+    'patrocinadores': {'tipo_contrato', 'estado_pat'},
+    'usuarios': {'departamento', 'rol', 'activo'},
+    'mantenimiento': {'estado', 'recurso_id', 'dias_min', 'dias_max'},
+    'reels': {'patrocinador_id', 'duracion_min', 'duracion_max'},
+    'bitacora': {'usuario_id', 'tipo_accion', 'modulo_filter'},
+}
+for _m, _claves in FILTROS_PERMITIDOS.items():
+    FILTROS_PERMITIDOS[_m] = _claves | FECHAS
+
+
+def _filtros_del_request(modulo, excluir=()):
+    """Extrae filtros del form aplicando whitelist por módulo."""
+    permitidos = FILTROS_PERMITIDOS.get(modulo, set())
+    return {k: v for k, v in request.form.items()
+            if k not in excluir and k in permitidos and v}
 
 
 
@@ -529,13 +556,7 @@ def preview():
     if modulo not in MODULOS_DISPONIBLES:
         return jsonify({'error': 'Módulo no válido'}), 400
     try:
-        filtros = {}
-        for key in request.form:
-            if key in ('modulo', 'csrf_token', 'sort_by', 'sort_dir'):
-                continue
-            val = request.form.get(key)
-            if val:
-                filtros[key] = val
+        filtros = _filtros_del_request(modulo, excluir=('modulo', 'csrf_token', 'sort_by', 'sort_dir'))
 
         sort_by = request.form.get('sort_by', '')
         sort_dir = request.form.get('sort_dir', 'asc')
@@ -574,14 +595,9 @@ def generar():
     if modulo not in MODULOS_DISPONIBLES:
         return jsonify({'error': 'Módulo no válido'}), 400
     try:
-        filtros = {}
         OPCIONES_FORM = ('resumen', 'comparar', 'top_n')
-        for key in request.form:
-            if key in ('modulo', 'csrf_token', 'sort_by', 'sort_dir', *OPCIONES_FORM):
-                continue
-            val = request.form.get(key)
-            if val:
-                filtros[key] = val
+        filtros = _filtros_del_request(
+            modulo, excluir=('modulo', 'csrf_token', 'sort_by', 'sort_dir', *OPCIONES_FORM))
 
         # análisis opcional del PDF (whitelist server-side)
         opciones = {
@@ -680,3 +696,82 @@ def eliminar(id):
     if ok:
         return jsonify({'mensaje': 'Reporte eliminado exitosamente'})
     return jsonify({'error': 'Error al eliminar reporte'}), 400
+
+
+# ──────────────────────────────────────────────
+# CONSTRUCTOR DE REPORTES (arquitectura: docs/ARQUITECTURA_CONSTRUCTOR_REPORTES.md)
+# ──────────────────────────────────────────────
+@bp.route('/catalogo/<modulo>', methods=['GET'])
+def catalogo_modulo(modulo):
+    from app.helpers.reportes_catalogo import catalogo_publico
+    publico = catalogo_publico(modulo)
+    if not publico:
+        return jsonify({'error': 'Módulo no disponible en el constructor'}), 400
+    return jsonify(publico)
+
+
+@bp.route('/construir', methods=['POST'])
+def construir():
+    from app.helpers.reportes_constructor import ConstructorError, ejecutar
+    peticion = request.get_json(silent=True) or {}
+    modulo = peticion.get('modulo', '')
+    if modulo not in MODULOS_DISPONIBLES:
+        return jsonify({'error': 'Módulo no válido'}), 400
+    try:
+        dataset = ejecutar(modulo, peticion)
+    except ConstructorError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception:
+        logger.exception('Error no controlado')
+        return jsonify({'error': 'Error al construir el reporte'}), 500
+    return jsonify(dataset)
+
+
+@bp.route('/construir/exportar', methods=['POST'])
+def construir_exportar():
+    """PDF (ConstructorReport) o CSV desde la misma petición del preview."""
+    import csv
+    import io
+    import json as jsonlib
+
+    from app.helpers.generators.constructor_report import ConstructorReport
+    from app.helpers.reportes_constructor import ConstructorError, ejecutar
+
+    peticion = request.get_json(silent=True) or {}
+    formato = peticion.get('formato', 'pdf')
+    if formato not in ('pdf', 'csv'):
+        return jsonify({'error': 'Formato no soportado'}), 400
+    modulo = peticion.get('modulo', '')
+    if modulo not in MODULOS_DISPONIBLES:
+        return jsonify({'error': 'Módulo no válido'}), 400
+
+    try:
+        dataset = ejecutar(modulo, peticion)
+    except ConstructorError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception:
+        logger.exception('Error no controlado')
+        return jsonify({'error': 'Error al construir el reporte'}), 500
+
+    sello = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+    if formato == 'csv':
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow([c['label'] for c in dataset['columnas']])
+        for fila in dataset['filas']:
+            writer.writerow([fila.get(c['key'], '') for c in dataset['columnas']])
+        buffer.seek(0)
+        return Response(
+            '\ufeff' + buffer.getvalue(),
+            mimetype='text/csv; charset=utf-8',
+            headers={'Content-Disposition':
+                     f'attachment; filename=constructor_{modulo}_{sello}.csv'})
+
+    generador = ConstructorReport(current_user)
+    generador.MODULO = f'{modulo}_personalizado'
+    pdf_bytes = generador.generar(dataset)
+    ruta, nombre = generador.save(pdf_bytes, current_user.id,
+                                  dataset.get('meta', {}).get('filtros_aplicados'))
+    return jsonify({'mensaje': 'Reporte generado exitosamente',
+                    'descargar': f'/reportes/descargar/{nombre}'})

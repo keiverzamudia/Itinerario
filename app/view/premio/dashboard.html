@@ -69,10 +69,10 @@
                          data-cantidad-entregada="{{ p.cantidad_entregada }}">
 
                         <div class="position-absolute top-0 end-0 m-2 d-flex gap-1" style="z-index: 10;">
-                            <button type="button" class="btn btn-action btn-action-edit btn-editar-premio" data-id="{{ p.id }}" title="Editar">
+                            <button type="button" class="btn btn-action btn-action-edit btn-editar-premio" data-id="{{ p.id }}" title="Editar" aria-label="Editar premio">
                                 <i class="fas fa-pen"></i>
                             </button>
-                            <button type="button" class="btn btn-action btn-action-danger btn-eliminar-premio" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" title="Eliminar">
+                            <button type="button" class="btn btn-action btn-action-danger btn-eliminar-premio" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" title="Eliminar" aria-label="Eliminar premio">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -164,7 +164,7 @@
                                     data-fecha="{{ p.fecha_entrega.strftime('%d/%m/%Y %H:%M') if p.fecha_entrega else '—' }}"
                                     data-descripcion="{{ p.descripcion or 'Sin notas registradas.' }}"
                                     data-cantidad="{{ p.cantidad_entregada }}"
-                                    title="Ver detalle">
+                                    title="Ver detalle" aria-label="Ver detalle de entrega">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </td>

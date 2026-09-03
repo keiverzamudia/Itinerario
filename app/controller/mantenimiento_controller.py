@@ -105,6 +105,9 @@ def agregar_nota(id):
     if not descripcion:
         flash('La descripción de la nota es obligatoria', 'warning')
         return redirect(url_for('mantenimiento.ver', id=id))
+    if len(descripcion) > 500:
+        flash('La nota no puede exceder 500 caracteres', 'warning')
+        return redirect(url_for('mantenimiento.ver', id=id))
     historial_model.registrar({
         'mantenimiento_id': mantenimiento['id'],
         'usuario_id': current_user.id,

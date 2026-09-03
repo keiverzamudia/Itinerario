@@ -1,4 +1,4 @@
-from app.database import Database
+from app.database import Database, transaction
 import logging
 
 from app.model.validaciones_model import ValidacionesMixin
@@ -377,15 +377,16 @@ class RolPermisoModel:
 
     def actualizar_permisos(self, permiso_ids):
         try:
-            db = self._get_db()
-            with db.cursor() as cur:
-                cur.execute("DELETE FROM rol_permiso WHERE rol_id = %s", (self.__id_rol,))
-                for pid in permiso_ids:
-                    cur.execute(
-                        "INSERT INTO rol_permiso (rol_id, permiso_id) VALUES (%s, %s)",
-                        (self.__id_rol, pid)
-                    )
-                return True
+            pids_validos = [int(pid) for pid in permiso_ids if str(pid).isdigit()]
+            with transaction('seguridad') as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM rol_permiso WHERE rol_id = %s", (self.__id_rol,))
+                    for pid in pids_validos:
+                        cur.execute(
+                            "INSERT INTO rol_permiso (rol_id, permiso_id) VALUES (%s, %s)",
+                            (self.__id_rol, pid)
+                        )
+            return True
         except Exception:
             logger.exception('Error de base de datos')
             return False

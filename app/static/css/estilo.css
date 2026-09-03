@@ -1,3 +1,17 @@
+/* =============================================
+   TOKENS GLOBALES — única fuente de color/tipografía
+   ============================================= */
+:root {
+    --c-fondo: #f4f6f9;
+    --c-texto: #0f172a;
+    --c-navy: #132a60;          /* azul institucional (sidebar, chat, login) */
+    --c-navy-claro: #1e3a5f;
+    --c-navy-oscuro: #0c1f36;
+    --c-accion: #2563eb;        /* acción primaria */
+    --c-accion-hover: #1d4ed8;
+    --c-accion-claro: #3b82f6;
+}
+
 /* Estilo sutil para mensajes de validación */
 .invalid-feedback {
     font-size: 0.78rem;
@@ -23,9 +37,9 @@
 
 body {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-    background-color: #f4f6f9;
+    background-color: var(--c-fondo);
     min-height: 100vh;
-    color: #0f172a;
+    color: var(--c-texto);
 }
 
 /* =============================================
@@ -45,7 +59,7 @@ body {
     left: 0;
     width: 220px;
     height: 100vh;
-    background: linear-gradient(180deg, #132a60 0%, #1e3a5f 100%);
+    background: linear-gradient(180deg, var(--c-navy) 0%, var(--c-navy-claro) 100%);
     color: white;
     display: flex;
     flex-direction: column;
@@ -75,7 +89,6 @@ body {
     padding: 12px 20px;
     color: rgba(255,255,255,0.85);
     text-decoration: none;
-    font-family: Georgia, 'Times New Roman', Times, serif;
     font-size: 14px;
     font-weight: bold;
     border-left: 3px solid transparent;
@@ -110,7 +123,7 @@ body {
 .sidebar-user .dropdown-toggle:hover { background-color: rgba(255,255,255,0.12); color: white; }
 
 .sidebar-user .dropdown-menu {
-    background-color: #0c1f36;
+    background-color: var(--c-navy-oscuro);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
     padding: 5px;
@@ -138,7 +151,7 @@ body {
     top: 10px;
     left: 10px;
     z-index: 1001;
-    background: #132a60;
+    background: var(--c-navy);
     color: white;
     border: none;
     border-radius: 8px;
@@ -166,7 +179,7 @@ body {
     align-items: center;
     justify-content: center;
     background: #ffffff;
-    color: #132a60;
+    color: var(--c-navy);
     border: none;
     border-radius: 50%;
     width: 42px;
@@ -237,11 +250,11 @@ body {
 }
 .notif-head > span { font-size: 0.88rem; }
 .notif-head .btn {
-    color: #2563eb;
+    color: var(--c-accion);
     font-weight: 600;
     font-size: 0.78rem;
 }
-.notif-head .btn:hover { color: #1d4ed8; }
+.notif-head .btn:hover { color: var(--c-accion-hover); }
 
 .notif-lista {
     max-height: 420px;
@@ -278,7 +291,7 @@ body {
     align-items: center;
     justify-content: center;
     background: rgba(37, 99, 235, 0.12);
-    color: #2563eb;
+    color: var(--c-accion);
     font-size: 14px;
 }
 .notif-item.tarea_completada .ni-icono {
@@ -309,7 +322,7 @@ body {
     height: 8px;
     margin-top: 25px;
     border-radius: 50%;
-    background: #2563eb;
+    background: var(--c-accion);
 }
 .notif-empty {
     padding: 32px 14px;
@@ -379,7 +392,7 @@ body {
 
 /* Botones genéricos */
 .btn-nuevo-guion, .btn-nuevo-usuario {
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    background: linear-gradient(135deg, var(--c-accion), var(--c-accion-claro));
     color: white !important;
     padding: 10px 20px;
     border-radius: 10px;
@@ -412,9 +425,9 @@ body {
     box-shadow: 0 8px 30px rgba(0,0,0,0.08);
 }
 
-/* Botón genérico */
-button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.notif-item) {
-    background-color: #2563eb;
+/* Botón primario genérico (opt-in: los botones sin clase ya NO se pintan solos) */
+.btn-primario {
+    background-color: var(--c-accion);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -422,8 +435,8 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
     border-radius: 8px;
     transition: all 0.2s;
 }
-button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.notif-item):hover {
-    background-color: #1d4ed8;
+.btn-primario:hover {
+    background-color: var(--c-accion-hover);
     transform: translateY(-1px);
 }
 
@@ -610,7 +623,7 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
     display: flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, #132a60, #1e3a5f);
+    background: linear-gradient(135deg, var(--c-navy), var(--c-navy-claro));
     color: #fff;
     border: none;
     border-radius: 50px;
@@ -669,7 +682,7 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    background: linear-gradient(135deg, #132a60, #1e3a5f);
+    background: linear-gradient(135deg, var(--c-navy), var(--c-navy-claro));
     color: #fff;
 }
 
@@ -780,7 +793,7 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
 }
 
 .aurora-msg-ia .aurora-msg-avatar {
-    background: linear-gradient(135deg, #132a60, #1e3a5f);
+    background: linear-gradient(135deg, var(--c-navy), var(--c-navy-claro));
     color: #fff;
 }
 
@@ -805,7 +818,7 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
 }
 
 .aurora-msg-usuario .aurora-msg-bubble {
-    background: linear-gradient(135deg, #132a60, #1e3a5f);
+    background: linear-gradient(135deg, var(--c-navy), var(--c-navy-claro));
     color: #fff;
     border-bottom-right-radius: 4px;
 }
@@ -846,7 +859,7 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
 
 .aurora-suggestion {
     background: #e8edf5 !important;
-    color: #132a60 !important;
+    color: var(--c-navy) !important;
     border: 1px solid #b8c9e0 !important;
     border-radius: 20px !important;
     padding: 5px 12px !important;
@@ -858,9 +871,9 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
 }
 
 .aurora-suggestion:hover {
-    background: #132a60 !important;
+    background: var(--c-navy) !important;
     color: #fff !important;
-    border-color: #132a60 !important;
+    border-color: var(--c-navy) !important;
 }
 
 /* Input area */
@@ -885,14 +898,14 @@ button:not(.sidebar-toggle):not(.btn-close):not(.btn):not(.notif-bell):not(.noti
 }
 
 .aurora-chat-input:focus {
-    border-color: #132a60;
+    border-color: var(--c-navy);
 }
 
 .aurora-chat-send {
     width: 40px;
     height: 40px;
     border-radius: 50% !important;
-    background: linear-gradient(135deg, #132a60, #1e3a5f) !important;
+    background: linear-gradient(135deg, var(--c-navy), var(--c-navy-claro)) !important;
     color: #fff !important;
     border: none !important;
     display: flex;
