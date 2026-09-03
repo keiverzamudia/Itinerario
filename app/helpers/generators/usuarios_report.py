@@ -1,9 +1,6 @@
 from app.helpers.generators.base_report import BaseReportGenerator
-from reportlab.platypus import Spacer, Paragraph, HRFlowable, SimpleDocTemplate
+from reportlab.platypus import Paragraph
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-import io
-from datetime import datetime
 
 
 class UsuariosReport(BaseReportGenerator):
@@ -14,26 +11,15 @@ class UsuariosReport(BaseReportGenerator):
         ('Rol', 'rol', 70), ('Depto', 'depto', 70), ('Estado', 'estado', 55),
     ]
 
-    def generate(self, datos, filtros=None, kpis=None, opciones=None):
-        buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
-        story = []
-        story.extend(self._header(filtros))
+    def _post_table_sections(self, kpis, opciones):
+        sections = []
         if kpis:
-            story.extend(self._seccion_kpis(kpis))
-        story.extend(self._secciones_analisis(kpis, opciones))
-        rows = self._build_rows(datos)
-        if rows:
-            header = [Paragraph(f"<b>{h}</b>", self.style_bold) for h, _, _ in self.COLUMNAS]
-            story.extend(self._tabla([header] + rows))
-        story.append(Spacer(1, 16))
-        story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#cbd5e1')))
-        story.append(Paragraph(
-            f"<font size='7' color='#94a3b8'>Reporte generado automáticamente — {self.TITULO} — {datetime.now().strftime('%d/%m/%Y %H:%M')}</font>",
-            self.style_small))
-        doc.build(story)
-        buffer.seek(0)
-        return buffer.getvalue()
+            activos = kpis.get('activos', 0)
+            inactivos = kpis.get('inactivos', 0)
+            items = [(k, v) for k, v in {'Activos': activos, 'Inactivos': inactivos}.items() if v > 0]
+            if items:
+                sections.extend(self._seccion_distribucion('Distribución por Estado', items, colors.HexColor('#15803d')))
+        return sections
 
     def _build_rows(self, datos):
         return [[

@@ -5,6 +5,17 @@ from flask import Blueprint, Response, render_template, request, jsonify, send_f
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.model.reportes_model import ReporteModel
+from app.helpers.generators.guiones_report import GuionesReport
+from app.helpers.generators.inventario_report import InventarioReport
+from app.helpers.generators.premios_report import PremiosReport
+from app.helpers.generators.contratos_report import ContratosReport
+from app.helpers.generators.balance_report import BalanceReport
+from app.helpers.generators.tareas_report import TareasReport
+from app.helpers.generators.patrocinadores_report import PatrocinadoresReport
+from app.helpers.generators.usuarios_report import UsuariosReport
+from app.helpers.generators.mantenimiento_report import MantenimientoReport
+from app.helpers.generators.reels_report import ReelsReport
+from app.helpers.generators.bitacora_report import BitacoraReport
 
 bp = Blueprint('reportes', __name__, url_prefix='/reportes')
 
@@ -496,30 +507,18 @@ COLUMNAS_PREVIEW = {
         {'key': 'detalle', 'label': 'Detalle'},
         {'key': 'created_at', 'label': 'Fecha'},
     ],
-    'resumen': [
-        {'key': 'modulo', 'label': 'Módulo'},
-        {'key': 'total', 'label': 'Total'},
-        {'key': 'activos', 'label': 'Activos'},
-        {'key': 'inactivos', 'label': 'Inactivos'},
-    ],
 }
 
 
-def _serializar_datos(datos):
-    """Convierte datos planos a JSON-safe. Ya vienen sanitizados."""
-    from decimal import Decimal
-    resultado = []
-    for d in datos:
-        fila = {}
-        for k, v in d.items():
-            if isinstance(v, datetime):
-                fila[k] = v.strftime('%d/%m/%Y %H:%M' if hasattr(v, 'hour') else '%d/%m/%Y')
-            elif isinstance(v, Decimal):
-                fila[k] = float(v)
-            elif isinstance(v, (int, float, str, bool, type(None))):
-                fila[k] = v
-        resultado.append(fila)
-    return resultado
+@bp.route('/campos/<modulo>', methods=['GET'])
+def campos_modulo(modulo):
+    from app.helpers.reportes_campos import CAMPOS_DISPONIBLES, COLUMNAS_DEFAULT
+    if modulo not in CAMPOS_DISPONIBLES:
+        return jsonify({'error': 'Modulo no valido'}), 400
+    return jsonify({
+        'campos': CAMPOS_DISPONIBLES[modulo],
+        'defaults': COLUMNAS_DEFAULT.get(modulo, []),
+    })
 
 
 @bp.route('/filtros/<modulo>', methods=['GET'])
@@ -539,17 +538,6 @@ def dashboard():
                            columnas_preview=COLUMNAS_PREVIEW)
 
 
-@bp.route('/filtros-bitacora', methods=['GET'])
-def filtros_bitacora():
-    from app.model.bitacora_model import ActividadModel
-    model = ActividadModel()
-    return jsonify({
-        'usuarios': model.obtener_usuarios_distintos(),
-        'acciones': model.obtener_acciones_distintas(),
-        'modulos': model.obtener_modulos_distintos(),
-    })
-
-
 @bp.route('/preview', methods=['POST'])
 def preview():
     modulo = request.form.get('modulo', '')
@@ -567,7 +555,6 @@ def preview():
         if cols:
             col_keys = [c['key'] for c in cols]
             datos = [{k: d.get(k) for k in col_keys} for d in datos]
-        datos_serializados = _serializar_datos(datos)
 
         kpis_display = {}
         for k, v in kpis.items():
@@ -576,7 +563,7 @@ def preview():
             kpis_display[k] = v
 
         resp = {
-            'datos': datos_serializados[:100],
+            'datos': datos[:100],
             'total': len(datos),
             'kpis': kpis_display,
             'modulo': MODULOS_DISPONIBLES[modulo]['nombre'],
@@ -595,7 +582,7 @@ def generar():
     if modulo not in MODULOS_DISPONIBLES:
         return jsonify({'error': 'Módulo no válido'}), 400
     try:
-        OPCIONES_FORM = ('resumen', 'comparar', 'top_n')
+        OPCIONES_FORM = ('resumen', 'comparar', 'top_n', 'orientacion', 'agrupar_por', 'ordenar_por', 'columnas_seleccionadas')
         filtros = _filtros_del_request(
             modulo, excluir=('modulo', 'csrf_token', 'sort_by', 'sort_dir', *OPCIONES_FORM))
 
@@ -610,6 +597,26 @@ def generar():
             top_n = 0
         if 1 <= top_n <= 20:
             opciones['top_n'] = top_n
+
+        # columnas dinámicas (whitelist server-side)
+        from app.helpers.reportes_campos import CAMPOS_DISPONIBLES
+        col_ids = request.form.getlist('columnas_seleccionadas')
+        campos_mod = CAMPOS_DISPONIBLES.get(modulo, {})
+        col_validas = [c for c in col_ids if c in campos_mod]
+        if col_validas:
+            opciones['columnas_seleccionadas'] = col_validas
+
+        orientacion = request.form.get('orientacion', '')
+        if orientacion in ('vertical', 'horizontal'):
+            opciones['orientacion'] = orientacion
+
+        agrupar_por = request.form.get('agrupar_por', '')
+        if agrupar_por and agrupar_por in campos_mod:
+            opciones['agrupar_por'] = agrupar_por
+
+        ordenar_por = request.form.get('ordenar_por', '')
+        if ordenar_por and ordenar_por in campos_mod:
+            opciones['ordenar_por'] = ordenar_por
 
         sort_by = request.form.get('sort_by', '')
         sort_dir = request.form.get('sort_dir', 'asc')
@@ -645,18 +652,17 @@ def generar():
             filtros['orden'] = f"{label} ({dir_label})"
 
         generadores = {
-            'guiones': lambda: __import__('app.helpers.generators.guiones_report', fromlist=['GuionesReport']).GuionesReport(current_user),
-            'inventario': lambda: __import__('app.helpers.generators.inventario_report', fromlist=['InventarioReport']).InventarioReport(current_user),
-            'premios': lambda: __import__('app.helpers.generators.premios_report', fromlist=['PremiosReport']).PremiosReport(current_user),
-            'contratos': lambda: __import__('app.helpers.generators.contratos_report', fromlist=['ContratosReport']).ContratosReport(current_user),
-            'balance': lambda: __import__('app.helpers.generators.balance_report', fromlist=['BalanceReport']).BalanceReport(current_user),
-            'tareas': lambda: __import__('app.helpers.generators.tareas_report', fromlist=['TareasReport']).TareasReport(current_user),
-            'patrocinadores': lambda: __import__('app.helpers.generators.patrocinadores_report', fromlist=['PatrocinadoresReport']).PatrocinadoresReport(current_user),
-            'usuarios': lambda: __import__('app.helpers.generators.usuarios_report', fromlist=['UsuariosReport']).UsuariosReport(current_user),
-            'mantenimiento': lambda: __import__('app.helpers.generators.mantenimiento_report', fromlist=['MantenimientoReport']).MantenimientoReport(current_user),
-            'reels': lambda: __import__('app.helpers.generators.reels_report', fromlist=['ReelsReport']).ReelsReport(current_user),
-            'bitacora': lambda: __import__('app.helpers.generators.bitacora_report', fromlist=['BitacoraReport']).BitacoraReport(current_user),
-            'resumen': lambda: __import__('app.helpers.generators.resumen_report', fromlist=['ResumenReport']).ResumenReport(current_user),
+            'guiones': lambda: GuionesReport(current_user),
+            'inventario': lambda: InventarioReport(current_user),
+            'premios': lambda: PremiosReport(current_user),
+            'contratos': lambda: ContratosReport(current_user),
+            'balance': lambda: BalanceReport(current_user),
+            'tareas': lambda: TareasReport(current_user),
+            'patrocinadores': lambda: PatrocinadoresReport(current_user),
+            'usuarios': lambda: UsuariosReport(current_user),
+            'mantenimiento': lambda: MantenimientoReport(current_user),
+            'reels': lambda: ReelsReport(current_user),
+            'bitacora': lambda: BitacoraReport(current_user),
         }
 
         if modulo not in generadores:

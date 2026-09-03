@@ -106,6 +106,7 @@ Fuente de verdad detallada: `CHECKLIST.md`. Resumen:
 4. **Fase 4 — Reportes "efecto bitácora" (hecha):** filtros progresivos en los 11 módulos + PDFs con resumen ejecutivo/Top-N/comparativa. Detalle en `.opencode/reportes-context.md`.
 5. **Rediseño EN VIVO (hecho):** `vivo.html` reescrito según `docs/PROMPT_MAESTRO_envivo.md`; relojes server-side (`inicio_show`/`inicio_curso`, epoch ms al frontend con offset de servidor); chip ⏱ SHOW en header.
 6. **Tareas multi-asignación + notificaciones (hecho):** modal acepta varios empleados y/o departamento completo; tabla `seguridad.notificaciones` (migración ejecutada por el usuario, `seguridad.sql` parcheado para clones); campana global con pull+push; al completar, el creador recibe `tarea_completada`.
+7. **Motor de reportes PDF dinámico (hecho):** columnas seleccionables vía checkboxes, agrupación con subtotales, orientación auto, ordenamiento dinámico. Detalle en `docs/reporte_pdf/CHECKLIST.md` y `.opencode/reportes-context.md`. Suite: 226 tests.
 
 Pendientes OPCIONALES acordados pero diferidos por el usuario ("dejémoslo así por ahora"):
 - Backfill defensivo SQL para filas `en_vivo/en_curso` heredadas sin reloj (blindaje de despliegues).

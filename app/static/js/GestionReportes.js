@@ -1,5 +1,3 @@
-const COLUMNAS_PREVIEW = window.COLUMNAS_PREVIEW || {};
-
 const MODULE_CONFIG = {
     guiones: {
         filters: [
@@ -335,6 +333,7 @@ const MONEY_KEYS = ['monto', 'monto_total', 'capital', 'saldo', 'precio', 'monto
 
 let moduloActual = null;
 let datosPreview = null;
+let camposDisponibles = {};
 
 function getCSRF() {
     const el = document.querySelector('input[name="csrf_token"]');
@@ -422,6 +421,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         html.push('</div>');
 
+        // ── Columnas del PDF ──
+        html.push('<div class="col-panel border-top pt-3 mt-3" id="colPanel" style="display:none;">');
+        html.push('<div class="d-flex justify-content-between align-items-center mb-2">');
+        html.push('<label class="form-label fw-bold small mb-0"><i class="fas fa-table-columns me-1"></i>Columnas del PDF</label>');
+        html.push('<div class="col-panel-actions">');
+        html.push('<button type="button" class="btn btn-outline-primary btn-sm" id="btnColAll">Todas</button>');
+        html.push('<button type="button" class="btn btn-outline-secondary btn-sm" id="btnColNone">Ninguna</button>');
+        html.push('</div></div>');
+        html.push('<div id="colCheckboxes" class="row g-1"></div>');
+        html.push('<div class="row g-2 mt-2">');
+        html.push('<div class="col-md-3"><label class="form-label small mb-1">Orientación</label>'
+            + '<select id="opcion_orientacion" class="form-select form-select-sm">'
+            + '<option value="vertical">Vertical</option>'
+            + '<option value="horizontal">Horizontal</option>'
+            + '<option value="auto">Automática</option></select></div>');
+        html.push('<div class="col-md-3"><label class="form-label small mb-1">Agrupar por</label>'
+            + '<select id="opcion_agrupar_por" class="form-select form-select-sm">'
+            + '<option value="">Sin agrupar</option></select></div>');
+        html.push('<div class="col-md-3"><label class="form-label small mb-1">Ordenar por</label>'
+            + '<select id="opcion_ordenar_por" class="form-select form-select-sm">'
+            + '<option value="">Por defecto</option></select></div>');
+        html.push('</div></div>');
+
         // Análisis opcional del PDF (disponible para todos los módulos)
         html.push('<div class="row g-2 mt-2 pt-2 border-top">');
         html.push('<div class="col-12"><label class="form-label fw-bold small mb-1 text-muted"><i class="fas fa-chart-line me-1"></i>Análisis del PDF</label></div>');
@@ -461,6 +483,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         btnPreview.disabled = false;
+        cargarCampos(modulo);
     }
 
     function mostrarSpinnerEn(filterId) {
@@ -469,6 +492,100 @@ document.addEventListener('DOMContentLoaded', function () {
         if (el.tagName === 'SELECT') {
             el.innerHTML = '<option value="" disabled selected><span class="filter-spinner"></span> Cargando...</option>';
         }
+    }
+
+    async function cargarCampos(modulo) {
+        const panel = document.getElementById('colPanel');
+        const container = document.getElementById('colCheckboxes');
+        const agruparSel = document.getElementById('opcion_agrupar_por');
+        const ordenarSel = document.getElementById('opcion_ordenar_por');
+        if (!panel || !container) return;
+
+        if (camposDisponibles[modulo]) {
+            renderCampos(modulo, camposDisponibles[modulo]);
+            return;
+        }
+
+        try {
+            const res = await fetch(`/reportes/campos/${modulo}`);
+            const data = await res.json();
+            if (data.campos) {
+                camposDisponibles[modulo] = data.campos;
+                renderCampos(modulo, data.campos);
+            }
+        } catch (e) {
+            panel.style.display = 'none';
+        }
+    }
+
+    function renderCampos(modulo, campos) {
+        const panel = document.getElementById('colPanel');
+        const container = document.getElementById('colCheckboxes');
+        const agruparSel = document.getElementById('opcion_agrupar_por');
+        const ordenarSel = document.getElementById('opcion_ordenar_por');
+        if (!panel || !container) return;
+
+        const entries = Object.entries(campos).sort((a, b) => (a[1].order || 99) - (b[1].order || 99));
+
+        container.innerHTML = entries.map(([key, c]) => {
+            const checked = c.default ? 'checked' : '';
+            return `<div class="col-6 col-md-4 col-lg-3">
+                <div class="form-check">
+                    <input class="form-check-input col-campo" type="checkbox" value="${key}" id="col_${key}" ${checked}>
+                    <label class="form-check-label" for="col_${key}">${c.label}</label>
+                </div>
+            </div>`;
+        }).join('');
+
+        // poblar agrupar_por y ordenar_por
+        if (agruparSel) {
+            agruparSel.innerHTML = '<option value="">Sin agrupar</option>';
+            entries.filter(([, c]) => c.groupable).forEach(([key, c]) => {
+                agruparSel.innerHTML += `<option value="${key}">${c.label}</option>`;
+            });
+        }
+        if (ordenarSel) {
+            ordenarSel.innerHTML = '<option value="">Por defecto</option>';
+            entries.filter(([, c]) => c.sortable).forEach(([key, c]) => {
+                ordenarSel.innerHTML += `<option value="${key}">${c.label}</option>`;
+            });
+        }
+
+        panel.style.display = 'block';
+
+        document.getElementById('btnColAll').onclick = () => {
+            container.querySelectorAll('.col-campo').forEach(cb => cb.checked = true);
+            verificarCantidadColumnas();
+        };
+        document.getElementById('btnColNone').onclick = () => {
+            container.querySelectorAll('.col-campo').forEach(cb => cb.checked = false);
+            verificarCantidadColumnas();
+        };
+        container.addEventListener('change', verificarCantidadColumnas);
+    }
+
+    function verificarCantidadColumnas() {
+        const checks = document.querySelectorAll('.col-campo:checked');
+        let aviso = document.getElementById('colAviso');
+        if (!aviso) {
+            aviso = document.createElement('div');
+            aviso.id = 'colAviso';
+            aviso.className = 'text-warning small mt-2 fw-semibold';
+            const panel = document.getElementById('colPanel');
+            if (panel) panel.appendChild(aviso);
+        }
+        if (checks.length > 15) {
+            aviso.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>'
+                + `${checks.length} columnas seleccionadas — el PDF se rotará automáticamente y la fuente será más pequeña.`;
+            aviso.style.display = 'block';
+        } else {
+            aviso.style.display = 'none';
+        }
+    }
+
+    function obtenerCamposSeleccionados() {
+        const checks = document.querySelectorAll('.col-campo:checked');
+        return Array.from(checks).map(cb => cb.value);
     }
 
     async function cargarOpcionesAjax(modulo, filterId, config, params) {
@@ -719,6 +836,18 @@ document.addEventListener('DOMContentLoaded', function () {
         if (opResumen && opResumen.checked) fd.append('resumen', '1');
         if (opComparar && opComparar.checked) fd.append('comparar', '1');
         if (opTopN && parseInt(opTopN.value, 10) > 0) fd.append('top_n', opTopN.value);
+
+        // columnas dinámicas
+        const colSeleccionadas = obtenerCamposSeleccionados();
+        if (colSeleccionadas.length > 0) {
+            colSeleccionadas.forEach(c => fd.append('columnas_seleccionadas', c));
+        }
+        const opOrient = document.getElementById('opcion_orientacion');
+        const opAgrupar = document.getElementById('opcion_agrupar_por');
+        const opOrdenar = document.getElementById('opcion_ordenar_por');
+        if (opOrient && opOrient.value !== 'auto') fd.append('orientacion', opOrient.value);
+        if (opAgrupar && opAgrupar.value) fd.append('agrupar_por', opAgrupar.value);
+        if (opOrdenar && opOrdenar.value) fd.append('ordenar_por', opOrdenar.value);
 
         try {
             const res = await fetch('/reportes/generar', {

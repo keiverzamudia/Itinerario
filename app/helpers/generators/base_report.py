@@ -1,10 +1,11 @@
 import io
 import os
 from datetime import datetime
-from reportlab.lib.pagesizes import letter
+from collections import OrderedDict
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable
+    HRFlowable, KeepTogether
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -36,6 +37,152 @@ class BaseReportGenerator:
             textColor=colors.HexColor('#64748b')
         )
 
+    # ── Métodos para columnas dinámicas ──────────────────────────────
+
+    def _obtener_columnas(self, opciones):
+        """Resuelve qué columnas usar: dinámicas o default."""
+        col_ids = (opciones or {}).get('columnas_seleccionadas')
+        if not col_ids:
+            return self.COLUMNAS
+
+        from app.helpers.reportes_campos import CAMPOS_DISPONIBLES
+        campos = CAMPOS_DISPONIBLES.get(self.MODULO, {})
+        columnas = []
+        for key in col_ids:
+            if key in campos:
+                c = campos[key]
+                columnas.append((c['label'], key, c['width']))
+        return columnas if columnas else self.COLUMNAS
+
+    def _calcular_anchos(self, columnas, orientacion='vertical'):
+        """Anchos proporcionales que caben en la página."""
+        disponible = 712 if orientacion == 'horizontal' else 532
+        anchos = [c[2] for c in columnas]
+        total = sum(anchos)
+        if total <= disponible:
+            return anchos
+        factor = disponible / total
+        return [max(30, int(a * factor)) for a in anchos]
+
+    def _determinar_pagina(self, columnas, orientacion_solicitada):
+        """Determina tamaño y orientación de página."""
+        if orientacion_solicitada == 'horizontal':
+            return landscape(letter)
+        total_width = sum(c[2] for c in columnas)
+        if len(columnas) >= 8 or total_width > 500:
+            return landscape(letter)
+        return letter
+
+    def _ajustar_estilo_segun_columnas(self, num_columnas):
+        """Ajusta tamaños de fuente según cantidad de columnas."""
+        if num_columnas <= 7:
+            return
+        elif num_columnas <= 10:
+            self.style_normal.fontSize = 7
+            self.style_bold = ParagraphStyle(
+                'TextoNegrita7', parent=self.style_normal, fontName='Helvetica-Bold'
+            )
+        else:
+            self.style_normal.fontSize = 6
+            self.style_bold = ParagraphStyle(
+                'TextoNegrita6', parent=self.style_normal, fontName='Helvetica-Bold'
+            )
+
+    def _tipo_campo(self, key):
+        """Obtiene el tipo de campo desde CAMPOS_DISPONIBLES."""
+        from app.helpers.reportes_campos import CAMPOS_DISPONIBLES
+        campo = CAMPOS_DISPONIBLES.get(self.MODULO, {}).get(key, {})
+        return campo.get('type', 'texto')
+
+    def _es_numerico(self, key):
+        """True si el campo se puede sumar en subtotales."""
+        from app.helpers.reportes_campos import CAMPOS_DISPONIBLES, CAMPOS_NUMERICOS
+        campo = CAMPOS_DISPONIBLES.get(self.MODULO, {}).get(key, {})
+        return campo.get('type', '') in CAMPOS_NUMERICOS
+
+    def _formatear_celda(self, item, columna, tipo_campo):
+        """Formatea un valor según tipo de campo."""
+        from app.helpers.reportes_campos import FORMATTERS
+        key = columna[1]
+        value = item.get(key)
+        formatter = FORMATTERS.get(tipo_campo, FORMATTERS['texto'])
+        texto = formatter(value)
+        max_chars = max(10, columna[2] // 5)
+        if len(texto) > max_chars:
+            texto = texto[:max_chars - 2] + '..'
+        return Paragraph(texto, self.style_normal)
+
+    def _construir_tabla_simple(self, datos, columnas):
+        """Tabla sin agrupar: header + filas."""
+        header = [Paragraph(f"<b>{c[0]}</b>", self.style_bold) for c in columnas]
+        rows = [header]
+        for item in datos:
+            rows.append([
+                self._formatear_celda(item, c, self._tipo_campo(c[1]))
+                for c in columnas
+            ])
+        return rows
+
+    def _construir_tabla_agrupada(self, datos, columnas, campo_agrupacion):
+        """Tabla con grupos, subtotales y total general."""
+        grupos = OrderedDict()
+        for item in datos:
+            valor = item.get(campo_agrupacion, 'Sin valor')
+            grupos.setdefault(valor, []).append(item)
+
+        numeric_keys = [c[1] for c in columnas if self._es_numerico(c[1])]
+        total_general = {k: 0.0 for k in numeric_keys}
+        rows = []
+
+        for grupo_valor, items in grupos.items():
+            rows.append([
+                Paragraph(f"<b>{grupo_valor}</b>", self.style_bold)
+            ] + [''] * (len(columnas) - 1))
+
+            for item in items:
+                rows.append([
+                    self._formatear_celda(item, c, self._tipo_campo(c[1]))
+                    for c in columnas
+                ])
+
+            subtotales = {}
+            for k in numeric_keys:
+                subtotales[k] = sum(float(i.get(k, 0) or 0) for i in items)
+                total_general[k] += subtotales[k]
+
+            subtotal_row = [Paragraph("<b>Subtotal</b>", self.style_bold)]
+            for c in columnas[1:]:
+                val = subtotales.get(c[1])
+                if val is not None and val != 0:
+                    subtotal_row.append(
+                        Paragraph(f"<b>${val:,.2f}</b>" if self._tipo_campo(c[1]) == 'moneda'
+                                  else f"<b>{val:,.1f}</b>" if self._tipo_campo(c[1]) == 'decimal'
+                                  else f"<b>{int(val):,}</b>",
+                                  self.style_bold))
+                else:
+                    subtotal_row.append('')
+            rows.append(subtotal_row)
+
+        total_row = [Paragraph("<b>TOTAL GENERAL</b>", self.style_bold)]
+        for c in columnas[1:]:
+            val = total_general.get(c[1])
+            if val and val != 0:
+                total_row.append(
+                    Paragraph(f"<b>${val:,.2f}</b>" if self._tipo_campo(c[1]) == 'moneda'
+                              else f"<b>{val:,.1f}</b>" if self._tipo_campo(c[1]) == 'decimal'
+                              else f"<b>{int(val):,}</b>",
+                              self.style_bold))
+            else:
+                total_row.append('')
+        rows.append(total_row)
+
+        return rows
+
+    def _post_table_sections(self, kpis, opciones):
+        """Hook para distribuciones. Override en subclases."""
+        return []
+
+    # ── Header ───────────────────────────────────────────────────────
     def _header(self, filtros=None):
         story = []
         usuario_nombre = getattr(self.usuario, 'nombre', 'Sistema')
@@ -95,7 +242,7 @@ class BaseReportGenerator:
         story.append(Spacer(1, 8))
         return story
 
-    def _tabla(self, datos, style_override=None):
+    def _tabla(self, datos, style_override=None, col_widths=None):
         story = []
         if not datos or len(datos) < 2:
             story.append(Paragraph(
@@ -118,20 +265,26 @@ class BaseReportGenerator:
         if style_override:
             table_style.extend(style_override)
 
-        col_widths = [w for _, _, w in self.COLUMNAS] if self.COLUMNAS else None
-        table = Table(datos, colWidths=col_widths, repeatRows=1)
+        widths = col_widths or ([w for _, _, w in self.COLUMNAS] if self.COLUMNAS else None)
+        table = Table(datos, colWidths=widths, repeatRows=1)
         table.setStyle(TableStyle(table_style))
         story.append(table)
         return story
 
     def generate(self, datos, filtros=None, kpis=None, opciones=None):
         buffer = io.BytesIO()
+        opciones = opciones or {}
+
+        columnas = self._obtener_columnas(opciones)
+        orientacion = opciones.get('orientacion', 'vertical')
+        pagina = self._determinar_pagina(columnas, orientacion)
+        self._ajustar_estilo_segun_columnas(len(columnas))
+
         doc = SimpleDocTemplate(
-            buffer, pagesize=letter,
+            buffer, pagesize=pagina,
             rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40,
         )
 
-        opciones = opciones or {}
         story = []
         story.extend(self._header(filtros))
 
@@ -140,17 +293,39 @@ class BaseReportGenerator:
 
         story.extend(self._secciones_analisis(kpis, opciones))
 
-        rows = self._build_rows(datos)
-        if rows:
-            header = [Paragraph(f"<b>{h}</b>", self.style_bold) for h, _, _ in self.COLUMNAS]
-            table_data = [header] + rows
-            story.extend(self._tabla(table_data))
+        # Ordenamiento dinámico
+        ordenar_por = opciones.get('ordenar_por')
+        if ordenar_por:
+            datos = sorted(datos, key=lambda x: x.get(ordenar_por) or '')
+
+        # Tabla con columnas dinámicas o default
+        col_ids = opciones.get('columnas_seleccionadas')
+        if col_ids:
+            agrupar_por = opciones.get('agrupar_por')
+            if agrupar_por and any(c[1] == agrupar_por for c in columnas):
+                table_data = self._construir_tabla_agrupada(datos, columnas, agrupar_por)
+            else:
+                table_data = self._construir_tabla_simple(datos, columnas)
+        else:
+            rows = self._build_rows(datos)
+            if rows:
+                header = [Paragraph(f"<b>{h}</b>", self.style_bold) for h, _, _ in self.COLUMNAS]
+                table_data = [header] + rows
+            else:
+                table_data = None
+
+        if table_data:
+            anchos = self._calcular_anchos(columnas, orientacion) if col_ids else None
+            story.extend(self._tabla(table_data, col_widths=anchos))
         else:
             story.append(Spacer(1, 20))
             story.append(Paragraph(
                 "<font color='#64748b'>No hay datos para mostrar.</font>",
                 self.style_normal
             ))
+
+        # Hook para distribuciones (override en subclases)
+        story.extend(self._post_table_sections(kpis, opciones))
 
         story.append(Spacer(1, 20))
         story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#cbd5e1')))

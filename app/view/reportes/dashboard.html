@@ -202,6 +202,12 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
+
+.col-panel { margin-top: 12px; }
+.col-panel .form-check { margin-bottom: 4px; }
+.col-panel .form-check-label { font-size: .78rem; }
+.col-panel-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+.col-panel-actions button { font-size: .7rem; padding: 2px 8px; }
 </style>
 
 <div class="container-fluid px-4 py-4">
@@ -374,7 +380,6 @@
     </div>
 </div>
 
-<script>window.COLUMNAS_PREVIEW = {{ columnas_preview | tojson }};</script>
 <script type="module" src="{{ url_for('static', filename='js/GestionReportes.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/ReportesConstructor.js') }}"></script>
 {% include 'components/footer.html' %}

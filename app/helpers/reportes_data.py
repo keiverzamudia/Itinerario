@@ -704,45 +704,6 @@ def _datos_bitacora(filtros, fi, ff):
     datos = _sanitizar_para_reporte(modulo, datos)
     return datos, kpis
 
-def _datos_resumen(filtros, fi, ff):
-    modulo = 'resumen'
-    from app.model.guion_model import GuionModel
-    from app.model.inventario_model import InventarioModel
-    from app.model.premio_model import PremioModel
-    from app.model.contrato_model import ContratoModel
-    from app.model.balance_model import BalanceModel
-    from app.model.tarea_model import TareaModel
-    from app.model.patrocinador_model import PatrocinadorModel
-    from app.model.auth_model import UsuarioModel
-    from app.model.mantenimiento_model import MantenimientoModel
-    from app.model.reels_model import ReelModel
-    modulos = [
-        ('Guiones', GuionModel().consultar(), lambda d: d.get('estado') == 'publicado'),
-        ('Inventario', InventarioModel().consultar(), lambda d: d.get('estado_nombre') == 'Disponible'),
-        ('Premios', PremioModel().consultar(), lambda d: d.get('estado') == 'entregado'),
-        ('Contratos', ContratoModel().consultar(), lambda d: d.get('estatus') == 'Vigente'),
-        ('Tareas', TareaModel().consultar(), lambda d: d.get('Estado') == 'Completada'),
-        ('Patrocinadores', PatrocinadorModel().consultar(), lambda d: d.get('estado') == 1),
-        ('Usuarios', UsuarioModel().consultar(), lambda d: d.get('activo')),
-        ('Mantenimiento', MantenimientoModel().consultar(), lambda d: d.get('estado') in ('reparado',)),
-        ('Reels', ReelModel().consultar(), lambda d: True),
-    ]
-    datos = [{
-        'modulo': n, 'total': len(d),
-        'activos': sum(1 for x in d if f(x)),
-        'inactivos': sum(1 for x in d if not f(x)),
-    } for n, d, f in modulos]
-    total_reg = sum(d.get('total', 0) for d in datos)
-    total_act = sum(d.get('activos', 0) for d in datos)
-    kpis = {
-        'modulos': len(datos),
-        'total_registros': total_reg,
-        'total_activos': total_act,
-        'total_inactivos': total_reg - total_act,
-    }
-    datos = _sanitizar_para_reporte(modulo, datos)
-    return datos, kpis
-
 
 OBTENEDORES = {
     'guiones': _datos_guiones,
@@ -756,7 +717,4 @@ OBTENEDORES = {
     'mantenimiento': _datos_mantenimiento,
     'reels': _datos_reels,
     'bitacora': _datos_bitacora,
-    # ponytail: resumen preservado tal cual — tiene un bug latente (Usuario no es dict,
-    # revienta con AttributeError) y no es alcanzable desde las rutas; arreglar aparte.
-    'resumen': _datos_resumen,
 }
