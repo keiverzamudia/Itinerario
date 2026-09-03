@@ -108,6 +108,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (formAsignar) {
         formAsignar.addEventListener('submit', function(e) {
             e.preventDefault();
+            var selUsuarios = document.getElementById('asig_usuarios');
+            var selDepto = document.getElementById('asig_departamento');
+            if (!selUsuarios || !selDepto) return;
+            if (!selUsuarios.selectedOptions.length && !selDepto.value) {
+                Swal.fire({ title: 'Falta el destinatario', text: 'Marca al menos un empleado o elige un departamento completo.', icon: 'warning' });
+                return;
+            }
             Swal.fire({
                 title: '¿Asignar tarea?', icon: 'question', showCancelButton: true,
                 confirmButtonColor: '#198754', cancelButtonColor: '#6c757d',

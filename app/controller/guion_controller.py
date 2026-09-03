@@ -5,7 +5,6 @@ from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import GUION
 from app.model.guion_model import (GuionModel, ElementoGuionModel, _parsear_duracion)
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('guion', __name__, url_prefix='/guiones')
 
@@ -20,18 +19,8 @@ def _usuarios_choices():
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'guion',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('guion', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET'])
@@ -89,6 +78,8 @@ def agregar_elementos(id):
         duracion_str = request.form.get('duracion_estimada', '')
         encargado = request.form.get('encargado', '')
         errores = []
+        if tipo not in ('pregame', 'game'):
+            errores.append('Tipo de elemento inválido')
         if not contenido:
             errores.append('El contenido es obligatorio')
         if tipo == 'pregame' and not hora_str:
@@ -108,10 +99,14 @@ def agregar_elementos(id):
                 flash(e, 'warning')
         else:
             hora = None
-            if tipo == 'pregame' and hora_str:
-                hora_parts = hora_str.split(':')
-                hora = time(int(hora_parts[0]), int(hora_parts[1]))
-            inning = int(inning_str) if inning_str else None
+            try:
+                if tipo == 'pregame' and hora_str:
+                    hora_parts = hora_str.split(':')
+                    hora = time(int(hora_parts[0]), int(hora_parts[1]))
+                inning = int(inning_str) if inning_str else None
+            except (ValueError, IndexError):
+                flash('Hora o inning inválidos', 'warning')
+                return redirect(url_for('guion.agregar_elementos', id=id))
             ultimo_orden = elemento_model.obtener_ultimo_orden(id, tipo)
             elemento_model.set_guion_id(id)
             elemento_model.set_tipo(tipo)
@@ -163,6 +158,8 @@ def editar_elemento(guion_id, elemento_id):
         duracion_str = request.form.get('duracion_estimada', '')
         encargado = request.form.get('encargado', '')
         errores = []
+        if tipo not in ('pregame', 'game'):
+            errores.append('Tipo de elemento inválido')
         if not contenido:
             errores.append('El contenido es obligatorio')
         if tipo == 'pregame' and not hora_str:
@@ -188,10 +185,14 @@ def editar_elemento(guion_id, elemento_id):
                 flash(e, 'warning')
         else:
             hora = None
-            if tipo == 'pregame' and hora_str:
-                hp = hora_str.split(':')
-                hora = time(int(hp[0]), int(hp[1]))
-            inning = int(inning_str) if inning_str else None
+            try:
+                if tipo == 'pregame' and hora_str:
+                    hp = hora_str.split(':')
+                    hora = time(int(hp[0]), int(hp[1]))
+                inning = int(inning_str) if inning_str else None
+            except (ValueError, IndexError):
+                flash('Hora o inning inválidos', 'warning')
+                return redirect(url_for('guion.editar_elemento', guion_id=guion_id, elemento_id=elemento_id))
             elemento_model.modificar(elemento_id, {
                 'tipo': tipo, 'hora': hora, 'inning': inning,
                 'medio_inning': medio_inning or None, 'contenido': contenido,
@@ -324,7 +325,11 @@ def replicar(id):
             for e in errores:
                 flash(e, 'warning')
             return render_template('guion/replicar.html', guion=guion)
-        fechas_lista = [date.fromisoformat(f) for f in fechas_json.split(',')]
+        try:
+            fechas_lista = [date.fromisoformat(f) for f in fechas_json.split(',')]
+        except ValueError:
+            flash('Una de las fechas seleccionadas no es válida', 'danger')
+            return render_template('guion/replicar.html', guion=guion)
         ids = guion_model.replicar(id, fechas_lista, nombre_base)
         _registrar_bitacora('create', 'Replicar guión', f'Guión "{guion["nombre"]}" replicado a {len(ids)} fecha(s)')
         flash(f'Guion replicado exitosamente en {len(ids)} fecha(s)', 'success')

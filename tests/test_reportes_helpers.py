@@ -1,7 +1,7 @@
 """Tests de helpers del módulo reportes — lógica pura, sin BD."""
 from datetime import datetime
 
-from app.controller.reportes_controller import (
+from app.helpers.reportes_utils import (
     _parsear_fecha,
     _ordenar_datos,
     _formatear_tiempo,
@@ -29,6 +29,25 @@ def test_ordenar_datos_casos_borde():
     # sin campo devuelve igual
     datos = [{'a': 1}]
     assert _ordenar_datos(datos, None) is datos
+
+
+def test_ordenar_datos_numerico_no_lexicografico():
+    # regresión: '100' < '20' como string; debe ordenar numérico
+    datos = [{'monto': 100}, {'monto': 20}, {'monto': 3}]
+    assert [d['monto'] for d in _ordenar_datos(datos, 'monto')] == [3, 20, 100]
+    assert [d['monto'] for d in _ordenar_datos(datos, 'monto', 'desc')] == [100, 20, 3]
+
+
+def test_ordenar_datos_montos_formateados():
+    datos = [{'m': '$9,000'}, {'m': '$10,000'}, {'m': '$500'}]
+    assert [d['m'] for d in _ordenar_datos(datos, 'm')] == ['$500', '$9,000', '$10,000']
+
+
+def test_ordenar_datos_mixto_numeros_y_texto():
+    # números primero (asc), luego texto alfabético
+    datos = [{'v': 'ana'}, {'v': 5}, {'v': 2}, {'v': 'beta'}]
+    orden = [d['v'] for d in _ordenar_datos(datos, 'v')]
+    assert orden == [2, 5, 'ana', 'beta']
 
 
 def test_formatear_tiempo():

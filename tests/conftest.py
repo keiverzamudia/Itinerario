@@ -131,3 +131,11 @@ def login(client):
             'captcha_text': captcha,
         })
     return _login
+
+
+@pytest.fixture()
+def superadmin(client, crear_usuario, login):
+    """Cliente con sesión iniciada como Superadmin."""
+    usuario = crear_usuario(rol='Superadmin')
+    login(usuario)
+    return usuario

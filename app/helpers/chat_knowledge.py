@@ -1,5 +1,8 @@
 import re
+import logging
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class ChatKnowledge:
@@ -275,6 +278,7 @@ class ChatKnowledge:
                 return {'respuesta': f'Hay **{len(pagos)}** pago(s) registrado(s) por un total de **${total:,.2f}**.', 'intencion': 'contar_balance', 'confianza': 0.9}
 
         except Exception:
+            logger.exception('Error no controlado')
             return {'respuesta': f'No pude obtener los datos de **{modulo}** en este momento. Intenta de nuevo.', 'intencion': 'error', 'confianza': 0.3}
 
         return {'respuesta': f'El módulo **{modulo}** no está disponible para conteo.', 'intencion': 'contar', 'confianza': 0.4}
@@ -335,6 +339,7 @@ class ChatKnowledge:
                 return {'respuesta': resp, 'intencion': 'estados_mantenimiento', 'confianza': 0.95}
 
         except Exception:
+            logger.exception('Error no controlado')
             return {'respuesta': f'No pude obtener los estados de **{modulo}**. Intenta de nuevo.', 'intencion': 'error', 'confianza': 0.3}
 
         return {'respuesta': f'El módulo **{modulo}** no tiene estados configurados para consulta.', 'intencion': 'estados', 'confianza': 0.4}
@@ -364,6 +369,7 @@ class ChatKnowledge:
             return {'respuesta': resp, 'intencion': 'reciente', 'confianza': 0.9}
 
         except Exception:
+            logger.exception('Error no controlado')
             return {'respuesta': 'No pude obtener la actividad reciente.', 'intencion': 'error', 'confianza': 0.3}
 
     @classmethod
@@ -387,6 +393,7 @@ class ChatKnowledge:
                     'confianza': 0.9,
                 }
             except Exception:
+                logger.exception('Error no controlado')
                 return {'respuesta': 'No pude cruzar los datos de patrocinadores y contratos.', 'intencion': 'error', 'confianza': 0.3}
 
         if 'tareas' in modulos and 'usuarios' in modulos:
@@ -400,6 +407,7 @@ class ChatKnowledge:
                     'confianza': 0.9,
                 }
             except Exception:
+                logger.exception('Error no controlado')
                 return {'respuesta': 'No pude cruzar los datos de tareas y usuarios.', 'intencion': 'error', 'confianza': 0.3}
 
         resp = f'Puedo consultarte individualmente sobre: **{"**, **".join(modulos)}**. Dime cuál te interesa y te doy los datos.'

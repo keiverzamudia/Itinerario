@@ -5,7 +5,8 @@ from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import TAREA
 from app.model.tarea_model import TareaModel, TareasAsignadasModel
 from app.model.auth_model import UsuarioModel
-from app.model.bitacora_model import ActividadModel
+from app.model.notificacion_model import NotificacionModel
+from app import emitir_notificacion
 
 bp = Blueprint('gestion_tarea', __name__, url_prefix='/gestion-tarea')
 
@@ -13,18 +14,29 @@ bp.before_request(verificar_acceso(TAREA))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'tareas',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('tareas', tipo, accion, detalle)
+
+
+def _destinatarios_asignacion(usuario_model):
+    """Ids deduplicados desde multi-select y/o departamento completo."""
+    ids = []
+    vistos = set()
+    brutos = request.form.getlist('id_usuarios') + ([request.form['id_usuario']]
+                                                    if request.form.get('id_usuario') else [])
+    for valor in brutos:
+        if str(valor).strip().isdigit():
+            n = int(valor)
+            if n not in vistos:
+                vistos.add(n)
+                ids.append(n)
+    departamento = request.form.get('departamento', '').strip()
+    if departamento:
+        for u in usuario_model.consultar(departamento=departamento, activo=1):
+            if u.id not in vistos:
+                vistos.add(u.id)
+                ids.append(u.id)
+    return usuario_model.filtrar_ids_activos(ids), departamento
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -77,16 +89,32 @@ def dashboard():
             if not current_user.tiene_permiso('gestion_tarea.create'):
                 return jsonify({'error': 'No tienes permiso para esta accion'}), 403
             id_tarea = request.form.get('id_tarea')
-            id_usuario = request.form.get('id_usuario')
-            if not id_tarea or not id_usuario:
-                return jsonify({'success': False, 'error': 'Selecciona tarea y empleado'})
-            ok = asignacion_model.registrar({
-                'id_tarea': id_tarea, 'id_usuario': id_usuario,
+            if not id_tarea:
+                return jsonify({'success': False, 'error': 'Selecciona una tarea'})
+            destino_ids, departamento = _destinatarios_asignacion(usuario_model)
+            if not destino_ids:
+                return jsonify({'success': False, 'error': 'Selecciona al menos un empleado o un departamento'})
+            tarea = tarea_model.obtener_por_id(id_tarea)
+            if not tarea:
+                return jsonify({'success': False, 'error': 'Tarea no encontrada'})
+            asignados, omitidos = asignacion_model.asignar_a_usuarios(
+                id_tarea, destino_ids, tarea['Nombre_Tarea'], current_user.nombre
+            )
+            if asignados is None:
+                return jsonify({'success': False, 'error': 'Error al asignar tarea'})
+            detalle = f'Tarea "{tarea["Nombre_Tarea"]}" asignada a {len(asignados)} usuario(s)'
+            if departamento:
+                detalle += f' (departamento: {departamento})'
+            if omitidos:
+                detalle += f'; {len(omitidos)} ya la tenían'
+            _registrar_bitacora('update', 'Asignar tarea', detalle)
+            emitir_notificacion(asignados, {
+                'tipo': 'tarea_asignada',
+                'titulo': 'Nueva tarea asignada',
+                'mensaje': f'"{tarea["Nombre_Tarea"]}" te fue asignada por {current_user.nombre}',
+                'url': '/gestion-tarea/mis-tareas',
             })
-            if ok:
-                tarea = tarea_model.obtener_por_id(id_tarea)
-                _registrar_bitacora('update', 'Asignar tarea', f'Tarea "{tarea["Nombre_Tarea"]}" asignada a usuario #{id_usuario}')
-            return jsonify({'success': bool(ok), 'error': None if ok else 'Error al asignar tarea'})
+            return jsonify({'success': True, 'asignados': len(asignados), 'omitidos': len(omitidos)})
 
         if request.form.get('consultar'):
             data = []
@@ -104,8 +132,19 @@ def dashboard():
     total = len(tareas)
     tareas_activas = [(t['id_tarea'], f"{t['id_tarea']} - {t['Nombre_Tarea']}") for t in tareas if t['Estatus']]
     empleados_activos = [(u.id, f"{u.cedula} - {u.nombre}") for u in usuarios]
+
+    # multi-asignación: empleados agrupados por departamento (optgroups) + lista de deptos
+    por_depto = {}
+    for u in usuarios:
+        por_depto.setdefault(getattr(u, 'departamento', '') or 'Sin departamento', []).append(
+            (u.id, f"{u.cedula} - {u.nombre}")
+        )
+    empleados_por_depto = sorted(por_depto.items())
+    departamentos_activos = usuario_model.departamentos_activos()
     return render_template('gestion_tarea/dashboard.html', tareas=tareas, total=total,
-                           tareas_activas=tareas_activas, empleados_activos=empleados_activos)
+                           tareas_activas=tareas_activas, empleados_activos=empleados_activos,
+                           empleados_por_depto=empleados_por_depto,
+                           departamentos_activos=departamentos_activos)
 
 
 @bp.route('/mis-tareas')
@@ -145,8 +184,11 @@ def consultar_asignaciones():
 @bp.route('/completar', methods=['POST'])
 def completar():
     asignacion_model = TareasAsignadasModel()
+    tarea_model = TareaModel()
     id_asignacion = request.form.get('id_asignacion')
-    es_ajax = request.accept_mimetypes.accept_json
+    # solo es AJAX si el cliente pide JSON explícito (Accept: */* del
+    # navegador también "acepta" JSON y devolvía JSON crudo en el submit nativo)
+    es_ajax = 'application/json' in (request.headers.get('Accept') or '')
 
     if not id_asignacion:
         if es_ajax:
@@ -166,6 +208,21 @@ def completar():
         return redirect(url_for('gestion_tarea.tareas_usuario'))
     asignacion_model.modificar_estado(id_asignacion, 'Completada')
     _registrar_bitacora('update', 'Completar tarea', f'Tarea "{asignacion["Nombre_Tarea"]}" completada')
+
+    # el supervisor de la tarea es su creador: se entera al instante
+    tarea = tarea_model.obtener_por_id(asignacion['id_tarea'])
+    creador_id = tarea.get('id_usuario_creador') if tarea else None
+    if creador_id and int(creador_id) != int(current_user.id):
+        payload = {
+            'tipo': 'tarea_completada',
+            'titulo': 'Tarea completada',
+            'mensaje': f'{current_user.nombre} completó "{asignacion["Nombre_Tarea"]}"',
+            'url': '/gestion-tarea/seguimiento',
+        }
+        if NotificacionModel().crear(creador_id, payload['tipo'], payload['titulo'],
+                                     payload['mensaje'], payload['url']):
+            emitir_notificacion([int(creador_id)], payload)
+
     if es_ajax:
         return jsonify({'success': True, 'mensaje': 'Tarea completada'})
     flash('Actividad marcada como completada', 'success')

@@ -148,13 +148,13 @@
         <h6 class="modal-title fw-bold mb-0"><i class="fas fa-user-check me-2"></i> Asignar Tarea</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <form novalidate id="formAsignarTarea">
+      <form id="formAsignarTarea">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="asignar" value="true"/>
         <div class="modal-body p-4">
           <div class="mb-3">
             <label class="form-label fw-bold small text-dark">Tarea *</label>
-            <select name="id_tarea" class="form-select">
+            <select name="id_tarea" class="form-select" required>
               <option value="">Seleccione una tarea</option>
               {% for val, label in tareas_activas %}
               <option value="{{ val }}">{{ label }}</option>
@@ -163,15 +163,29 @@
             <div class="invalid-feedback"></div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-bold small text-dark">Empleado *</label>
-            <select name="id_usuario" class="form-select">
-              <option value="">Seleccione un empleado</option>
-              {% for val, label in empleados_activos %}
-              <option value="{{ val }}">{{ label }}</option>
+            <label class="form-label fw-bold small text-dark">Empleados * <span class="fw-normal text-muted">(mantén Ctrl/Cmd para elegir varios)</span></label>
+            <select name="id_usuarios" id="asig_usuarios" class="form-select" multiple size="7">
+              {% for depto, lista in empleados_por_depto %}
+              <optgroup label="{{ depto }}">
+                {% for val, label in lista %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </optgroup>
               {% endfor %}
             </select>
             <div class="invalid-feedback"></div>
           </div>
+          <div class="mb-2">
+            <label class="form-label fw-bold small text-dark">O un departamento completo</label>
+            <select name="departamento" id="asig_departamento" class="form-select">
+              <option value="">— Ninguno —</option>
+              {% for d in departamentos_activos %}
+              <option value="{{ d }}">{{ d }} (todos)</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback"></div>
+          </div>
+          <small class="text-muted d-block mb-0"><i class="fas fa-info-circle me-1"></i>El departamento se suma a los empleados marcados; los repetidos se omiten.</small>
         </div>
         <div class="modal-footer bg-light border-0 px-4 py-3">
           <button type="button" class="btn btn-light rounded-3 px-3 small fw-bold" data-bs-dismiss="modal">Cancelar</button>

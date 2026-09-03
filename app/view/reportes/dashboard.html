@@ -87,6 +87,97 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* =============================================
+   CONSTRUCTOR DE REPORTES — asistente por pasos
+   ============================================= */
+.wiz-steps {
+    display: flex; gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+.wiz-steps::-webkit-scrollbar { display: none; }
+.wiz-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 5px 12px 5px 6px;
+    font-size: .72rem; font-weight: 600;
+    color: #94a3b8;
+    background: #f1f5f9;
+    transition: background .2s ease, color .2s ease;
+}
+.wiz-chip .wiz-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .66rem;
+    background: #e2e8f0; color: #64748b;
+}
+.wiz-chip.active { background: #2563eb; color: #fff; }
+.wiz-chip.active .wiz-num { background: rgba(255,255,255,.22); color: #fff; }
+.wiz-chip.done { background: #ecfdf5; color: #059669; }
+.wiz-chip.done .wiz-num { background: #d1fae5; color: #059669; }
+
+.wiz-pregunta {
+    font-size: .95rem; font-weight: 700; color: #0f172a;
+    margin-bottom: 12px;
+}
+.wiz-opciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+.wiz-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.wiz-card:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 4px 16px rgba(37,99,235,.10);
+    transform: translateY(-2px);
+}
+.wiz-card.sel {
+    border-color: #2563eb;
+    background: #f0f4ff;
+    box-shadow: 0 0 0 1px #2563eb inset;
+}
+.wiz-card .wiz-icono {
+    width: 38px; height: 38px;
+    margin: 0 auto 8px;
+    border-radius: 10px;
+    background: #f1f5f9; color: #475569;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem;
+}
+.wiz-card.sel .wiz-icono { background: #2563eb; color: #fff; }
+.wiz-card .wiz-titulo { font-size: .8rem; font-weight: 600; color: #1e293b; line-height: 1.25; }
+.wiz-card .wiz-detalle { font-size: .66rem; color: #94a3b8; margin-top: 3px; }
+
+.wiz-fila-grano { margin-top: 12px; }
+.wiz-segmentos { display: inline-flex; background: #f1f5f9; border-radius: 10px; padding: 3px; gap: 2px; }
+.wiz-segmentos button {
+    border: none; background: transparent;
+    padding: 5px 14px; border-radius: 8px;
+    font-size: .74rem; font-weight: 600; color: #64748b;
+    cursor: pointer;
+}
+.wiz-segmentos button.on { background: #fff; color: #2563eb; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+.wiz-metrica-check .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
+
+.wiz-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .wiz-card, .wiz-chip { transition: none; }
+}
+
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -126,10 +217,13 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white border-bottom py-3 px-4">
+        <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
             <h5 class="fw-bold mb-0"><i class="fas fa-cubes me-2 text-primary"></i>Selecciona un módulo</h5>
+            <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" id="btnConstructor">
+                <i class="fas fa-wand-magic-sparkles me-1"></i>Constructor avanzado
+            </button>
         </div>
-        <div class="card-body p-4">
+        <div class="card-body p-4" style="padding-top:12px !important;">
             <div class="row g-3" id="moduloGrid">
                 {% for key, mod in modulos.items() %}
                 <div class="col-6 col-md-4 col-lg-2">
@@ -143,6 +237,33 @@
                 </div>
                 {% endfor %}
             </div>
+
+            {# ── CONSTRUCTOR VISUAL (asistente por pasos) ── #}
+            <div class="card border mt-3 d-none" id="wizardCard"
+                 style="border-color:#e2e8f0; border-radius:14px; background:#fcfdff;">
+                <div class="card-header bg-transparent border-bottom py-3 px-3 px-md-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span class="fw-bold small text-primary">
+                            <i class="fas fa-wand-magic-sparkles me-1"></i>
+                            Constructor — <span id="wizModuloNombre">—</span>
+                        </span>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted p-0"
+                                id="btnWizCerrar">
+                            <i class="fas fa-xmark me-1"></i>Salir
+                        </button>
+                    </div>
+                    <div class="wiz-steps mt-2" id="wizSteps"></div>
+                </div>
+                <div class="card-body px-3 px-md-4 py-4" id="wizBody"></div>
+                <div class="card-footer bg-white border-top py-3 px-3 px-md-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" id="btnWizAtras" disabled>
+                        <i class="fas fa-arrow-left me-1"></i>Atrás
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" id="btnWizNext" disabled>
+                        Siguiente<i class="fas fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -153,7 +274,7 @@
                     <i class="fas fa-sliders-h me-2 text-primary"></i>
                     Filtros — <span id="filterModuloNombre">—</span>
                 </h5>
-                <button type="button" class="btn btn-action btn-action-more" id="btnCerrarPanel" title="Cerrar">
+                <button type="button" class="btn btn-action btn-action-more" id="btnCerrarPanel" title="Cerrar" aria-label="Cerrar panel de filtros">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -230,10 +351,10 @@
                             <td>{{ r.usuario_nombre or '—' }}</td>
                             <td>
                                 <div class="action-group">
-                                    <a href="/reportes/descargar/{{ r.archivo_ruta.split('/')[-1] }}" class="btn btn-action btn-action-primary" title="Descargar">
+                                    <a href="/reportes/descargar/{{ r.archivo_ruta.split('/')[-1] }}" class="btn btn-action btn-action-primary" title="Descargar" aria-label="Descargar reporte">
                                         <i class="fas fa-download"></i>
                                     </a>
-                                    <button type="button" class="btn btn-action btn-action-danger btn-eliminar-reporte" data-id="{{ r.id }}" title="Eliminar">
+                                    <button type="button" class="btn btn-action btn-action-danger btn-eliminar-reporte" data-id="{{ r.id }}" title="Eliminar" aria-label="Eliminar reporte">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -255,4 +376,5 @@
 
 <script>window.COLUMNAS_PREVIEW = {{ columnas_preview | tojson }};</script>
 <script type="module" src="{{ url_for('static', filename='js/GestionReportes.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/ReportesConstructor.js') }}"></script>
 {% include 'components/footer.html' %}

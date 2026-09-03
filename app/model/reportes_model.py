@@ -1,6 +1,9 @@
 import json
+import logging
 import os
 from app.database import Database
+
+logger = logging.getLogger(__name__)
 
 
 class ReporteModel:
@@ -24,6 +27,7 @@ class ReporteModel:
                 )
                 return cur.lastrowid
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def listar(self, usuario_id=None, limite=50):
@@ -42,6 +46,7 @@ class ReporteModel:
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id):
@@ -56,6 +61,7 @@ class ReporteModel:
                 )
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def eliminar(self, id):
@@ -72,4 +78,5 @@ class ReporteModel:
                 cur.execute("DELETE FROM reportes_generados WHERE id = %s", (id,))
             return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False

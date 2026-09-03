@@ -1,11 +1,13 @@
 import json
+import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import PATROCINADOR
 from app.model.patrocinador_model import PatrocinadorModel
 from app.model.auth_model import UsuarioModel
-from app.model.bitacora_model import ActividadModel
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('patrocinador', __name__, url_prefix='/patrocinador')
 
@@ -13,18 +15,8 @@ bp.before_request(verificar_acceso(PATROCINADOR))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'patrocinador',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('patrocinador', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -40,7 +32,7 @@ def dashboard():
                 for u in UsuarioModel().consultar(activo=True):
                     usuarios_map[u.id] = u.nombre
             except Exception:
-                pass
+                logger.exception('Error no controlado')
             return jsonify([{
                 'id_patrocinador': p['id_patrocinador'],
                 'nombre_empresa': p['nombre_empresa'],

@@ -6,7 +6,6 @@ from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import MANTENIMIENTO
 from app.model.mantenimiento_model import (RecursoModel, MantenimientoModel,
                                             HistorialMantenimientoModel)
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('mantenimiento', __name__, url_prefix='/mantenimiento')
 
@@ -16,18 +15,8 @@ bp.before_request(verificar_acceso(MANTENIMIENTO))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'mantenimiento',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('mantenimiento', tipo, accion, detalle)
 
 
 @bp.route('/')
@@ -115,6 +104,9 @@ def agregar_nota(id):
     descripcion = request.form.get('descripcion', '').strip()
     if not descripcion:
         flash('La descripción de la nota es obligatoria', 'warning')
+        return redirect(url_for('mantenimiento.ver', id=id))
+    if len(descripcion) > 500:
+        flash('La nota no puede exceder 500 caracteres', 'warning')
         return redirect(url_for('mantenimiento.ver', id=id))
     historial_model.registrar({
         'mantenimiento_id': mantenimiento['id'],

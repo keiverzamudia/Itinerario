@@ -124,18 +124,21 @@ class BaseReportGenerator:
         story.append(table)
         return story
 
-    def generate(self, datos, filtros=None, kpis=None):
+    def generate(self, datos, filtros=None, kpis=None, opciones=None):
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
             buffer, pagesize=letter,
             rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40,
         )
 
+        opciones = opciones or {}
         story = []
         story.extend(self._header(filtros))
 
         if kpis:
             story.extend(self._seccion_kpis(kpis))
+
+        story.extend(self._secciones_analisis(kpis, opciones))
 
         rows = self._build_rows(datos)
         if rows:
@@ -163,6 +166,128 @@ class BaseReportGenerator:
 
     def _build_rows(self, datos):
         return []
+
+    def _secciones_analisis(self, kpis, opciones):
+        """Resumen ejecutivo + Top-N + comparativa, según opciones del usuario."""
+        story = []
+        if not kpis:
+            return story
+        if opciones and opciones.get('resumen'):
+            story.extend(self._resumen_ejecutivo(kpis))
+        if opciones and opciones.get('top_n'):
+            story.extend(self._top_destacados(kpis, opciones['top_n']))
+        if opciones and opciones.get('comparar'):
+            story.extend(self._comparativa_periodos(kpis, opciones.get('kpis_previos')))
+        return story
+
+    def _resumen_ejecutivo(self, kpis):
+        """Párrafo factual: SOLO números ya calculados, cero texto inventado."""
+        story = []
+        if not kpis:
+            return story
+        partes = []
+        total = None
+        for clave in ('total', 'total_pagos', 'total_registros', 'modulos'):
+            if isinstance(kpis.get(clave), (int, float)):
+                total = kpis[clave]
+                break
+        if total is not None:
+            partes.append(f"Se analizaron {total} registros tras aplicar los filtros seleccionados")
+        detalles = []
+        for k, v in kpis.items():
+            if isinstance(v, (dict, list)) or v is None:
+                continue
+            if k in ('total', 'total_pagos', 'total_registros', 'modulos') or len(detalles) >= 3:
+                continue
+            detalles.append(f"{str(k).replace('_', ' ')}: {v}")
+        if detalles:
+            partes.append(' · '.join(detalles))
+        if not partes:
+            return story
+        story.append(Spacer(1, 6))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#cbd5e1'), spaceAfter=4))
+        story.append(Paragraph("<b>Resumen ejecutivo</b>", self.style_normal))
+        story.append(Spacer(1, 2))
+        story.append(Paragraph(
+            f"<font size='9' color='#334155'>{'.'.join(partes)}.</font>",
+            self.style_normal
+        ))
+        story.append(Spacer(1, 6))
+        return story
+
+    def _top_destacados(self, kpis, n):
+        """Top N entidades por la distribución principal del módulo (reutiliza KPIs existentes)."""
+        distribucion = next(
+            (v for v in kpis.values() if isinstance(v, dict) and v), None
+        )
+        if not distribucion:
+            return []
+        ordenados = sorted(distribucion.items(), key=lambda x: x[1], reverse=True)[:max(int(n), 1)]
+        return self._seccion_distribucion(f'Top {n} destacados', ordenados)
+
+    def _comparativa_periodos(self, kpis, kpis_previos):
+        """KPIs lado a lado vs el período anterior desplazado. Solo escalares compartidos."""
+        story = []
+        story.append(Spacer(1, 6))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#cbd5e1'), spaceAfter=4))
+        story.append(Paragraph("<b>Comparativa vs período anterior</b>", self.style_normal))
+        story.append(Spacer(1, 4))
+        if not kpis_previos:
+            story.append(Paragraph(
+                "<font size='9' color='#64748b'><i>Sin datos comparables en el período anterior.</i></font>",
+                self.style_normal
+            ))
+            story.append(Spacer(1, 6))
+            return story
+        rows = [[Paragraph('<b>Indicador</b>', self.style_bold),
+                 Paragraph('<b>Actual</b>', self.style_bold),
+                 Paragraph('<b>Anterior</b>', self.style_bold),
+                 Paragraph('<b>Variación</b>', self.style_bold)]]
+        comparados = 0
+        for k, actual in kpis.items():
+            if isinstance(actual, (dict, list)) or k not in kpis_previos:
+                continue
+            previo = kpis_previos[k]
+            if isinstance(previo, (dict, list)):
+                continue
+            try:
+                a, p = float(str(actual).replace('$', '').replace(',', '') or 0), \
+                       float(str(previo).replace('$', '').replace(',', '') or 0)
+            except (ValueError, TypeError):
+                continue
+            if p:
+                variacion = f"{(a - p) / p * 100:+.0f}%"
+            elif a:
+                variacion = 'Nuevo'
+            else:
+                variacion = '—'
+            rows.append([
+                Paragraph(str(k).replace('_', ' ').title(), self.style_normal),
+                Paragraph(str(actual), self.style_normal),
+                Paragraph(str(previo), self.style_normal),
+                Paragraph(variacion, self.style_normal),
+            ])
+            comparados += 1
+        if not comparados:
+            story.append(Paragraph(
+                "<font size='9' color='#64748b'><i>Sin datos comparables en el período anterior.</i></font>",
+                self.style_normal
+            ))
+            story.append(Spacer(1, 6))
+            return story
+        t = Table(rows, colWidths=[220, 110, 110, 90])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('LINEBELOW', (0, 0), (-1, -2), 0.3, colors.HexColor('#e2e8f0')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 6))
+        return story
 
     def _seccion_kpis(self, kpis):
         story = []

@@ -1,6 +1,9 @@
 from app.database import Database
+import logging
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class ContratoModel(ValidacionesMixin, CrudInterface):
@@ -56,17 +59,20 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
         }
         if not self.validar_obligatorios(['id_patrocinador', 'fecha_inicio', 'fecha_fin', 'tipo'], datos):
             return False
-        if self._fecha_fin and self._fecha_inicio and self._fecha_fin < self._fecha_inicio:
-            self._errores.append('La fecha de fin no puede ser anterior a la fecha de inicio')
+        if not self.validar_fecha(self._fecha_inicio, 'Fecha de inicio') or \
+           not self.validar_fecha(self._fecha_fin, 'Fecha de fin'):
+            return False
+        if self._fecha_fin < self._fecha_inicio:
+            self.errores.append('La fecha de fin no puede ser anterior a la fecha de inicio')
             return False
         if self._monto_total is not None:
             try:
                 monto = float(self._monto_total)
                 if monto <= 0:
-                    self._errores.append('El monto debe ser mayor a 0')
+                    self.errores.append('El monto debe ser mayor a 0')
                     return False
             except (ValueError, TypeError):
-                self._errores.append('El monto no es valido')
+                self.errores.append('El monto no es valido')
                 return False
         return True
 
@@ -89,6 +95,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 self._id_contrato = cur.lastrowid
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def consultar(self, activos=True):
@@ -105,6 +112,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id_contrato):
@@ -118,6 +126,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (id_contrato,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def confirmar_modificacion(self, id):
@@ -139,6 +148,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 ))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def confirmar_eliminacion(self, id):
@@ -152,6 +162,7 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 cur.execute("UPDATE contrato SET estado = 0 WHERE id_contrato = %s", (id,))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def obtener_patrocinadores(self):
@@ -163,4 +174,5 @@ class ContratoModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []

@@ -1,6 +1,9 @@
 import pymysql
+import logging
 from app.database import Database
 from werkzeug.security import generate_password_hash, check_password_hash
+
+logger = logging.getLogger(__name__)
 
 
 class Usuario:
@@ -70,6 +73,9 @@ class UsuarioModel:
             if filtros.get('rol'):
                 sql += " AND rol = %s"
                 params.append(filtros['rol'])
+            if filtros.get('departamento'):
+                sql += " AND departamento = %s"
+                params.append(filtros['departamento'])
             if filtros.get('activo') is not None:
                 sql += " AND activo = %s"
                 params.append(1 if filtros['activo'] else 0)
@@ -78,6 +84,37 @@ class UsuarioModel:
                 cur.execute(sql, params)
                 return [Usuario(**r) for r in cur.fetchall()]
         except Exception:
+            logger.exception('Error de base de datos')
+            return []
+
+    def departamentos_activos(self):
+        try:
+            db = Database.get_connection('seguridad')
+            with db.cursor() as cur:
+                cur.execute(
+                    """SELECT DISTINCT departamento FROM usuarios
+                       WHERE activo = 1 AND departamento IS NOT NULL AND departamento != ''
+                       ORDER BY departamento"""
+                )
+                return [r['departamento'] for r in cur.fetchall()]
+        except Exception:
+            logger.exception('Error de base de datos')
+            return []
+
+    def filtrar_ids_activos(self, ids):
+        """De una lista de ids, devuelve los que existen y están activos (whitelist)."""
+        if not ids:
+            return []
+        try:
+            db = Database.get_connection('seguridad')
+            with db.cursor() as cur:
+                cur.execute(
+                    f"SELECT id FROM usuarios WHERE activo = 1 AND id IN ({', '.join(['%s'] * len(ids))})",
+                    tuple(int(i) for i in ids)
+                )
+                return sorted(r['id'] for r in cur.fetchall())
+        except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_por_id(self, id):
@@ -88,6 +125,7 @@ class UsuarioModel:
                 row = cur.fetchone()
                 return Usuario(**row) if row else None
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def obtener_por_email(self, email):
@@ -100,6 +138,7 @@ class UsuarioModel:
         except pymysql.err.OperationalError:
             raise
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def contar(self, **filtros):
@@ -115,6 +154,7 @@ class UsuarioModel:
                 row = cur.fetchone()
                 return row['total'] if row else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0
 
     def registrar(self, datos):
@@ -133,6 +173,7 @@ class UsuarioModel:
                 new_id = cur.lastrowid
             return self.obtener_por_id(new_id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def modificar(self, id, datos):
@@ -152,6 +193,7 @@ class UsuarioModel:
                     cur.execute(sql, params)
             return self.obtener_por_id(id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def eliminar(self, id):
@@ -160,7 +202,7 @@ class UsuarioModel:
             with db.cursor() as cur:
                 cur.execute("DELETE FROM usuarios WHERE id = %s", (id,))
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
     def actualizar_ultimo_acceso(self, id):
         try:
@@ -168,7 +210,7 @@ class UsuarioModel:
             with db.cursor() as cur:
                 cur.execute("UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = %s", (id,))
         except Exception:
-            pass
+            logger.exception('Error de base de datos')
 
 
 class PasswordResetTokenModel:

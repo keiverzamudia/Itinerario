@@ -94,14 +94,14 @@
                             </td>
                             <td>
                                 <div class="action-group">
-                                    <a href="{{ url_for('guion.agregar_elementos', id=guion.id) }}" class="btn btn-action btn-action-success" title="Agregar elementos">
+                                    <a href="{{ url_for('guion.agregar_elementos', id=guion.id) }}" class="btn btn-action btn-action-success" title="Agregar elementos" aria-label="Agregar elementos">
                                         <i class="fas fa-plus"></i>
                                     </a>
-                                    <a href="{{ url_for('guion.replicar', id=guion.id) }}" class="btn btn-action btn-action-info" title="Duplicar">
+                                    <a href="{{ url_for('guion.replicar', id=guion.id) }}" class="btn btn-action btn-action-info" title="Duplicar" aria-label="Duplicar guion">
                                         <i class="fas fa-copy"></i>
                                     </a>
                                     <div class="dropdown action-dropdown">
-                                        <button class="btn btn-action btn-action-more dropdown-toggle" data-bs-toggle="dropdown" title="Más opciones">
+                                        <button class="btn btn-action btn-action-more dropdown-toggle" data-bs-toggle="dropdown" title="Más opciones" aria-label="Más opciones">
                                             <i class="fas fa-ellipsis-h"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">

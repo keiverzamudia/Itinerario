@@ -6,7 +6,7 @@
             <h5 class="mb-0 fw-bold"><i class="fas fa-edit me-2"></i>Editar Recurso</h5>
         </div>
         <div class="card-body p-4">
-            <form novalidate method="POST">
+            <form method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="mb-3">
                     <label class="form-label fw-bold small text-dark">Nombre del recurso <span class="text-danger">*</span></label>

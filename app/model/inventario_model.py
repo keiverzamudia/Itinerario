@@ -1,7 +1,10 @@
 from app.database import Database
+import logging
 from app.model.auth_model import UsuarioModel
 from app.model.interfaces import CrudInterface
 from app.model.validaciones_model import ValidacionesMixin
+
+logger = logging.getLogger(__name__)
 
 
 class InventarioModel(ValidacionesMixin, CrudInterface):
@@ -88,6 +91,14 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 return False
             if not self.validar_fecha_no_futura(self.__fecha_compra, 'Fecha de compra'):
                 return False
+        if self.__costo is not None and str(self.__costo).strip() != '':
+            try:
+                if float(self.__costo) <= 0:
+                    self.errores.append('El campo Costo debe ser mayor a 0')
+                    return False
+            except (ValueError, TypeError):
+                self.errores.append('El campo Costo debe ser numérico')
+                return False
         return True
 
     # ---- CRUD RECURSOS (estilo PHP) ----
@@ -108,6 +119,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 ))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def consultar(self, solo_activos=True, tipo_id=None, estado_id=None):
@@ -132,6 +144,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def confirmar_modificacion(self, id):
@@ -157,6 +170,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 ))
                 return True
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def buscar(self):
@@ -171,6 +185,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (self.__id,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def confirmar_eliminacion(self, id):
@@ -185,6 +200,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (id,))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def cambiar_estado(self, recurso_id, nuevo_estado):
@@ -197,6 +213,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     # ---- HELPERS ADICIONALES (dropdowns, conteos) ----
@@ -212,6 +229,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT * FROM tipo_recurso ORDER BY nombre")
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     # ---- ESTADOS ----
@@ -222,6 +240,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT * FROM estado_recurso ORDER BY id")
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_estados_asignacion(self):
@@ -231,6 +250,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute("SELECT * FROM estado_asignacion ORDER BY id")
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     # ---- ASIGNACIONES ----
@@ -259,6 +279,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, params)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
     def obtener_asignacion(self, id):
@@ -277,6 +298,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def obtener_asignacion_activa(self, recurso_id):
@@ -289,6 +311,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 )
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def registrar_asignacion(self):
@@ -308,6 +331,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 new_id = cur.lastrowid
             return self.obtener_asignacion(new_id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def devolver_recurso(self, id):
@@ -322,6 +346,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 )
             return self.obtener_asignacion(id)
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def tiene_asignaciones_pendientes(self, id):
@@ -335,6 +360,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 row = cur.fetchone()
                 return row['total'] > 0 if row else False
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def total_asignaciones(self, id):
@@ -347,6 +373,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 row = cur.fetchone()
                 return row['total'] if row else 0
         except Exception:
+            logger.exception('Error de base de datos')
             return 0
 
     # ---- VALIDACIONES AJAX ----
@@ -361,6 +388,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
                 row = cur.fetchone()
                 return row['total'] > 0 if row else False
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     # ---- USUARIOS (cross-DB) ----
@@ -368,6 +396,7 @@ class InventarioModel(ValidacionesMixin, CrudInterface):
         try:
             return UsuarioModel().consultar()
         except Exception:
+            logger.exception('Error de base de datos')
             return []
 
 
@@ -402,6 +431,7 @@ class TipoRecursoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql)
                 return cur.fetchall()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def buscar_tipo(self):
@@ -412,6 +442,7 @@ class TipoRecursoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (self.__id_tipo,))
                 return cur.fetchone()
         except Exception:
+            logger.exception('Error de base de datos')
             return None
 
     def _validar_datos_recurso(self) -> bool:
@@ -436,6 +467,7 @@ class TipoRecursoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (self.__nombre_tipo, self.__descripcion_tipo))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def confirmar_modificacion(self, id_tipo):
@@ -452,6 +484,7 @@ class TipoRecursoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (self.__nombre_tipo, self.__descripcion_tipo, id_tipo))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False
 
     def confirmar_eliminacion(self, id_tipo):
@@ -466,4 +499,5 @@ class TipoRecursoModel(ValidacionesMixin, CrudInterface):
                 cur.execute(sql, (id_tipo,))
                 return cur.rowcount > 0
         except Exception:
+            logger.exception('Error de base de datos')
             return False

@@ -104,6 +104,9 @@
     <script src="{{ url_for('static', filename='vendor/datatables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/datatables.bootstrap5.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/initDataTables.js') }}"></script>
+{% if current_user.is_authenticated %}
+<script src="{{ url_for('static', filename='js/notificaciones.js') }}"></script>
+{% endif %}
 
 {% if current_user.is_authenticated %}
 <style>

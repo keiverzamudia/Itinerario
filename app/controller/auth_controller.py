@@ -1,27 +1,20 @@
 import json
+import logging
 import secrets
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, current_user
 from app.model.auth_model import UsuarioModel, PasswordResetTokenModel
-from app.model.bitacora_model import SesionModel, ActividadModel
 from app.helpers.email_service import enviar_email_recuperacion
+from app.model.bitacora_model import SesionModel
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'auth',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('auth', tipo, accion, detalle)
 
 
 def _generar_captcha():
@@ -79,7 +72,7 @@ def login():
                     if not s.get('fin_sesion'):
                         sesion_model.cerrar_sesion(s['id'])
             except Exception:
-                pass
+                logger.exception('Error no controlado')
             login_user(usuario, remember=remember)
             usuario_model.actualizar_ultimo_acceso(usuario.id)
             sesion = sesion_model.registrar({
@@ -146,8 +139,8 @@ def reset_password(token):
         password = request.form.get('password', '')
         confirm = request.form.get('confirm', '')
 
-        if len(password) < 8:
-            flash('La contrasena debe tener al menos 8 caracteres', 'danger')
+        if len(password) < 8 or len(password) > 30:
+            flash('La contrasena debe tener entre 8 y 30 caracteres', 'danger')
             return render_template('reset_password.html', token=token)
 
         if password != confirm:

@@ -1,4 +1,6 @@
 import pymysql  # O la librería de MySQL que use tu proyecto para capturar el error de BD
+import logging
+
 from app.database import Database
 
 # --- SIMULACIÓN DE TRAIT (ValidacionesMixin) ---
@@ -17,7 +19,7 @@ class Pago(Database, ValidacionesMixin):
                  referencia=None, fecha_pago=None, hora_pago=None,
                  registrado_por=None, descripcion=None, estado=0,
                  fecha_registro=None, **kwargs):
-        
+
         # Atributos encapsulados / privados (con doble guion bajo)
         self.__id_pago = id_pago
         self.__id_contrato = id_contrato
@@ -31,6 +33,7 @@ class Pago(Database, ValidacionesMixin):
         self.__estado = estado
         self.__fecha_registro = fecha_registro
         self.__nombre_patrocinador = kwargs.get('nombre_patrocinador', None)
+        self.__id_patrocinador = kwargs.get('id_patrocinador', None)
 
   
     @property
@@ -63,6 +66,9 @@ class Pago(Database, ValidacionesMixin):
     @property
     def nombre_patrocinador(self): return self.__nombre_patrocinador
 
+    @property
+    def id_patrocinador(self): return self.__id_patrocinador
+
   
     
     def _get_db(self):
@@ -83,7 +89,7 @@ class Pago(Database, ValidacionesMixin):
                 """)
                 return cur.fetchall()  
         except Exception as e:
-            print(f"Error en obtener_contratos_activos: {e}")
+            logger.exception(f"Error en obtener_contratos_activos: {e}")
             return []
 
     def obtener_contrato_por_id(self, id_contrato):
@@ -99,7 +105,7 @@ class Pago(Database, ValidacionesMixin):
                 """, (id_contrato,))
                 return cur.fetchone() 
         except Exception as e:
-            print(f"Error en obtener_contrato_por_id: {e}")
+            logger.exception(f"Error en obtener_contrato_por_id: {e}")
             return None
 
     def registrar_pago(self, datos):
@@ -125,7 +131,7 @@ class Pago(Database, ValidacionesMixin):
             db.commit()  # Confirma los datos de forma segura
             return self.obtener_pago_por_id(nuevo_id)
         except Exception as e:
-            print(f"Error al registrar pago en Base de Datos: {e}")
+            logger.exception(f"Error al registrar pago en Base de Datos: {e}")
             return None
 
     def get_total_pagado_by_contrato(self, id_contrato):
@@ -139,7 +145,7 @@ class Pago(Database, ValidacionesMixin):
                 row = cur.fetchone()
                 return float(row['total']) if row else 0.0
         except Exception as e:
-            print(f"Error en get_total_pagado_by_contrato: {e}")
+            logger.exception(f"Error en get_total_pagado_by_contrato: {e}")
             return 0.0
 
     def get_total_pagado_general(self):
@@ -150,26 +156,38 @@ class Pago(Database, ValidacionesMixin):
                 row = cur.fetchone()
                 return float(row['total']) if row else 0.0
         except Exception as e:
-            print(f"Error en get_total_pagado_general: {e}")
+            logger.exception(f"Error en get_total_pagado_general: {e}")
             return 0.0
 
-    def obtener_historial_pagos(self, limit=100):
+    def obtener_historial_pagos(self, limit=100, fecha_inicio=None, fecha_fin=None,
+                                tipo_pago=None):
         try:
             db = self._get_db()
-            with db.cursor() as cur:
-                cur.execute("""
-                    SELECT p.*, COALESCE(pat.nombre_empresa, 'Sin patrocinador') as nombre_patrocinador
+            sql = """
+                    SELECT p.*, c.id_patrocinador,
+                           COALESCE(pat.nombre_empresa, 'Sin patrocinador') as nombre_patrocinador
                     FROM pagos p
                     LEFT JOIN contrato c ON p.id_contrato = c.id_contrato
                     LEFT JOIN patrocinadores pat ON c.id_patrocinador = pat.id_patrocinador
-                    WHERE p.estado = 0
-                    ORDER BY p.fecha_registro DESC
-                    LIMIT %s
-                """, (limit,))
+                    WHERE p.estado = 0"""
+            params = []
+            if fecha_inicio:
+                sql += " AND p.fecha_pago >= %s"
+                params.append(fecha_inicio)
+            if fecha_fin:
+                sql += " AND p.fecha_pago <= %s"
+                params.append(fecha_fin)
+            if tipo_pago:
+                sql += " AND p.tipo_pago = %s"
+                params.append(tipo_pago)
+            sql += " ORDER BY p.fecha_registro DESC LIMIT %s"
+            params.append(limit)
+            with db.cursor() as cur:
+                cur.execute(sql, params)
                 # Convierte las filas en instancias de la clase Pago
                 return [Pago(**r) for r in cur.fetchall()]
         except Exception as e:
-            print(f"Error en obtener_historial_pagos: {e}")
+            logger.exception(f"Error en obtener_historial_pagos: {e}")
             return []
 
     def obtener_pago_por_id(self, id_pago):
@@ -186,7 +204,7 @@ class Pago(Database, ValidacionesMixin):
                 row = cur.fetchone()
                 return Pago(**row) if row else None
         except Exception as e:
-            print(f"Error en obtener_pago_por_id: {e}")
+            logger.exception(f"Error en obtener_pago_por_id: {e}")
             return None
 
     def obtener_top_contratos(self, limit=5):
@@ -206,10 +224,13 @@ class Pago(Database, ValidacionesMixin):
                 """, (limit,))
                 return cur.fetchall()
         except Exception as e:
-            print(f"Error en obtener_top_contratos: {e}")
+            logger.exception(f"Error en obtener_top_contratos: {e}")
             return []
 
     def modificar_pago(self, pago_id, datos):
+        if 'monto' in datos and not self.validar_monto(datos['monto']):
+            logger.warning('Validación rechazada: El monto debe ser numérico y mayor a 0.')
+            return None
         try:
             pago = self.obtener_pago_por_id(pago_id)
             if not pago:
@@ -235,7 +256,7 @@ class Pago(Database, ValidacionesMixin):
                 db.commit()
             return self.obtener_pago_por_id(pago_id)
         except Exception as e:
-            print(f"Error en modificar_pago: {e}")
+            logger.exception(f"Error en modificar_pago: {e}")
             return None
 
     def eliminar_pago(self, pago_id):
@@ -249,7 +270,7 @@ class Pago(Database, ValidacionesMixin):
             db.commit()
             return pago
         except Exception as e:
-            print(f"Error en eliminar_pago: {e}")
+            logger.exception(f"Error en eliminar_pago: {e}")
             return None
 
 
@@ -257,3 +278,6 @@ BalanceModel = Pago
 
 
 
+
+
+logger = logging.getLogger(__name__)

@@ -86,7 +86,8 @@ CREATE TABLE `elementos_guion` (
   `encargado` varchar(100) NOT NULL,
   `orden` int(11) DEFAULT NULL,
   `creado_en` datetime DEFAULT NULL,
-  `estado` varchar(20) DEFAULT NULL
+  `estado` varchar(20) DEFAULT NULL,
+  `inicio_curso` datetime DEFAULT NULL COMMENT 'Momento de entrada a en_curso'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -143,6 +144,7 @@ CREATE TABLE `guiones` (
   `id` int(11) NOT NULL,
   `nombre` varchar(200) NOT NULL,
   `estado` varchar(20) DEFAULT NULL,
+  `inicio_show` datetime DEFAULT NULL COMMENT 'Momento de Iniciar del show en vivo',
   `creado_en` datetime DEFAULT NULL,
   `modificado_en` datetime DEFAULT NULL,
   `tiempo_inning` int(11) DEFAULT NULL,

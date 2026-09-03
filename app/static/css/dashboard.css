@@ -681,3 +681,47 @@
   .production-panel .panel-body { padding: 16px; }
   .prod-current { flex-wrap: wrap; }
 }
+
+/* =============================================
+   UTILITARIOS (extraídos de estilos inline)
+   ============================================= */
+a.kpi-card { text-decoration: none; color: inherit; }
+
+.dash-btn {
+  background: var(--dblue);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 7px 18px;
+}
+.dash-btn:hover { filter: brightness(0.92); color: #fff; }
+
+.prod-live-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.prod-meta:last-child { margin-bottom: 0; }
+.prod-meta-link { color: var(--dblue); font-size: 0.8rem; text-decoration: none; }
+.prod-meta-link:hover { text-decoration: underline; }
+
+.mod-stat--wide { flex: 2; }
+
+.act-dot-create { background: rgba(16,185,129,0.1); color: var(--dgreen); }
+.act-dot-update { background: rgba(37,99,235,0.1); color: var(--dblue); }
+.act-dot-delete { background: rgba(239,68,68,0.1); color: var(--dred); }
+.act-dot-login { background: rgba(99,102,241,0.1); color: var(--dindigo); }
+.act-dot-otro { background: rgba(168,162,158,0.15); color: var(--dtext-muted); }
+
+.act-modulo-badge { background: rgba(0,0,0,0.04); color: var(--dtext-sec); margin-left: 6px; }
+
+.online-count-sub { font-size: 0.78rem; font-weight: 600; color: var(--dtext-sec); }
+
+.hi-blue { color: var(--dblue); }
+.hi-green { color: var(--dgreen); }
+.hi-amber { color: var(--damber); }

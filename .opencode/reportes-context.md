@@ -19,68 +19,40 @@ El sistema de reportes es un dashboard progresivo tipo "Profit Plus":
 
 ## Estados de implementación
 
-### ✅ Completos (nivel Contratos)
-- **contratos**: filtros (tipo, estatus, patrocinador AJAX, monto min/max, fecha) con progresividad tipo→patrocinador
-- **bitacora**: filtros (usuario AJAX, acción AJAX, módulo AJAX, fecha) con 3 selects progresivos
-- **inventario**: filtros (tipo AJAX→estado AJAX progresivo, costo min/max, fecha), KPIs (total, costo_total, costo_promedio), PDF con distribución por tipo/estado
+### ✅ Completos (patrón "efecto bitácora" aplicado a TODOS los módulos)
 
-### 🔄 Pendientes de mejorar (aplicar mismo patrón)
-Cada uno necesita: más filtros (categórico + rango numérico + fecha), progresividad entre filtros, KPIs enriquecidos, distribución en PDF.
+- **contratos**: tipo→patrocinador progresivo, estatus, monto min/max, fechas
+- **bitácora**: usuario/acción/módulo AJAX con triple progresividad, fechas
+- **inventario**: tipo→estado AJAX progresivo, costo min/max, fechas
+- **guiones**: estado + encargado AJAX (desde `elementos_guion.encargado`) + `elementos_min/max` + fechas
+- **premios**: estado→patrocinador progresivo + `cantidad_min/max` y `cantidad_entregada_min/max` + fechas
+- **tareas**: claves unificadas lowercase (`nombre_tarea`, `estado`) + estado→usuario_asignado progresivo (filtro por `id_usuario`, nombre resuelto en SQL) + fechas
+- **patrocinadores**: tipo_contrato + `estado_pat` (activo/inactivo; antes `estado_filter`) + fechas
+- **usuarios**: departamento→rol progresivo + `activo` sí/no + fechas
+- **mantenimiento**: estado→recurso progresivo + rango `dias_en_taller` (`dias_min/max`, calculado de fecha_ingreso→fecha_salida o hoy) + KPI `promedio_dias` + fechas
+- **reels**: patrocinador AHORA FUNCIONAL (`ReelModel.consultar` trae `id_patrocinador AS patrocinado`) + `duracion_min/max` en segundos + fechas
 
-#### guiones
-- Filtros actuales: estado (select estático), fecha
-- Faltan: `elementos_min`/`elementos_max` (rango #elementos), progresividad
-- KPIs: ya tiene (total, borradores, publicados, en_vivo, finalizados, tiempo_total)
-- PDF: ya tiene distribución por estado
-- Archivo: `_filtros_guiones` → agregar `elementos_min`/`max`, progresividad
+### Bugs corregidos durante Fase 4 (eran silenciosos)
+- `_filtros_balance` consultaba tabla inexistente `pagos_contratos` → ahora `pagos` (el select tipo_pago cargaba siempre vacío)
+- `_datos_premios`: `fetchall()` (tupla) + lista no se concatenaban → TypeError 500 en preview de premios
+- `_datos_tareas`: `usuario_nombre` nunca existía en el SELECT → asignado_a salía siempre '—'
+- Filtro de reels por patrocinador era no-op (el modelo no devolvía el id)
 
-#### premios
-- Filtros actuales: estado (estático), patrocinador_id (AJAX), fecha
-- Faltan: `cantidad_min`/`cantidad_max` (rango), `cantidad_entregada_min`/`max`
-- Progresividad: estado → patrocinador_id
-- KPIs: ya tiene (total, pendientes, entregados, tasa_entrega, por_patrocinador)
-- PDF: ya tiene distribución por estado
-- Archivo: `_filtros_premios` + JS `dependsOn`
+### Análisis opcional del PDF (todos los módulos)
+Opciones enviadas desde el panel de filtros (`Análisis del PDF`) a `/reportes/generar`,
+parseadas con whitelist server-side en `generar()`:
 
-#### balance
-- Filtros actuales: tipo_pago (AJAX), patrocinador_id (AJAX), monto min/max, fecha
-- Progresividad: tipo_pago → patrocinador_id
-- Bug conocido: columna `referencia` puede ser NULL en preview
-- KPIs: ya tiene (total_pagos, monto_total, promedio, monto_min, monto_max, tipos_pago distrib)
-- PDF: ya tiene distribución por tipo_pago
+| Opción form | Efecto |
+|---|---|
+| `resumen=1` | Párrafo factual generado SOLO desde los KPIs (`BaseReportGenerator._resumen_ejecutivo`) |
+| `top_n=N` (1-20) | Tabla Top N reutilizando la primera distribución dict de los kpis (`_top_destacados`) |
+| `comparar=1` | Misma consulta con ventana desplazada hacia atrás → tabla Actual/Anterior/Variación (`_comparativa_periodos`; "sin datos comparables" si no hay) |
 
-#### tareas
-- Filtros actuales: Estado (estático), usuario (AJAX), fecha
-- Progresividad: Estado → usuario_asignado
-- Bug: key `Estado` con mayúscula es inconsistente
-- KPIs: ya tiene (total, pendientes, en_progreso, completadas, completadas_pct)
-- PDF: ya tiene distribución por estado
+Los generadores que sobreescriben `generate()` aceptan `opciones=None` e insertan
+`story.extend(self._secciones_analisis(kpis, opciones))` tras sus KPIs.
 
-#### patrocinadores
-- Filtros actuales: tipo_contrato (estático), fecha
-- Faltan: `estado_filter` (activo/inactivo)
-- KPIs: ya tiene (total, activos, inactivos, por_tipo_contrato)
-- PDF: ya tiene por tipo_contrato (si existe en kpis)
-- Bug: nombre `estado_filter` es feo, refactor a `estado_pat`
-
-#### usuarios
-- Filtros actuales: rol (AJAX), departamento (AJAX), fecha
-- Faltan: `activo` (sí/no)
-- Progresividad: departamento → rol
-- KPIs: ya tiene (total, activos, inactivos, por_rol, por_departamento)
-- PDF: ya tiene distribución por rol
-
-#### mantenimiento
-- Filtros actuales: estado (AJAX), recurso_id (AJAX), fecha
-- Faltan: rango numérico (costo? días?)
-- Progresividad: estado → recurso_id
-- KPIs: ya tiene (total, en_espera, en_reparacion, reparados, dados_baja)
-- PDF: ya tiene distribución por estado
-
-#### reels
-- Filtros actuales: patrocinador_id (AJAX), fecha
-- Faltan: `duracion_min`/`duracion_max` (en segundos), progresividad con patrocinador
-- KPIs: ya tiene (total, total_videos, duracion_total, duracion_promedio)
+Tests: `tests/test_reportes_filtros.py` (filtros por módulo), `tests/test_reportes_pdf.py`
+(análisis PDF), `tests/test_reportes_smoke.py` (estabilidad preview).
 
 ## Patrón para implementar un módulo (receta)
 
@@ -126,3 +98,40 @@ Agregar `_seccion_distribucion` con los datos de distribución (tipos, estados, 
 - Fechas: `fecha_inicio`/`fecha_fin` siempre presentes
 - columnas preview: deben coincidir con lo que devuelve `_obtener_datos`
 - kpiCards keys: deben coincidir con las claves del dict `kpis`
+
+## Fase 5 — Constructor de Reportes (2026-08-25, EN CURSO)
+
+Arquitectura aprobada: `docs/ARQUITECTURA_CONSTRUCTOR_REPORTES.md`. Auditoría previa: `docs/AUDITORIA_REPORTES.md`.
+
+### ✅ F0 blindaje (hecho)
+- Whitelists de filtros por módulo en preview/generar (`FILTROS_PERMITIDOS` + `_filtros_del_request`, reportes_controller.py) — claves desconocidas se descartan y ya no llegan al header del PDF.
+- `_ordenar_datos` numérico (antes '100'<'20' string-wise) + tests.
+- balance: fechas/tipo_pago en SQL (`obtener_historial_pagos(limit, fecha_inicio, fecha_fin, tipo_pago)`), tope 2000, match patrocinador EXACTO vía `c.id_patrocinador` (muere el startswith); `Pago.id_patrocinador` nuevo property.
+- bitácora: fechas en SQL (fecha_desde/hasta), cap 5000 (antes 500 silencioso).
+- FIX no-op: filtro tareas `asignado_a` nunca filtraba (backend leía `usuario_id`) — ahora ambas claves.
+
+### ✅ F1 piloto (hecho): contratos + bitácora
+- `app/helpers/reportes_catalogo.py`: MODULO_BUILDER declarativo, FUENTES_SQL (FKs reales), SOFT_DELETE, DIMENSIONES/METRICAS/FILTROS_BUILDER con SQL calificado, FUENTE_ALIASES, `catalogo_publico()` (sirve sin SQL interno).
+- `app/helpers/reportes_constructor.py`: motor whitelistado → dataset genérico; buckets DATE_FORMAT; comparativa período anterior; LIMIT 500 visible vía meta.limit_alcanzado; ConstructorError→400.
+- Endpoints: GET /reportes/catalogo/<modulo>, POST /reportes/construir, POST /reportes/construir/exportar (pdf/csv).
+- `generators/constructor_report.py` (ConstructorReport) + wizard frontend `static/js/ReportesConstructor.js` (stepper; "Resumen general" delega al flujo clásico intacto).
+- Tests: tests/test_reportes_constructor.py (11) — consistencia catálogo, anti-inyección, 400s, CSV/PDF.
+
+### Pendiente (fases siguientes del plan)
+- Extender MODULO_BUILDER al resto de módulos (balance→mantenimiento→premios→guiones→resto; antes matar N+1 mantenimiento/reels).
+- Contrato `opciones` PDF completo (skill reportes-pdf) + refactor boilerplate generadores (D5).
+- Plantillas guardadas (requiere decisión de migración BD) e índices de fecha.
+
+### ✅ FASE 1 — Capa de configuración declarativa (2026-08-25, hecha)
+- `reportes_catalogo.py` ampliado a 11 módulos con constructor (todos menos `resumen`, inhabilitado por bug latente): guiones(produccion/evolucion), inventario(valorizacion/asignaciones_cat), premios(entregas_stock), balance(cobranza), tareas(carga), patrocinadores(cartera_pat), usuarios(planta), mantenimiento(taller), reels(contenido).
+- Nuevos registros: FUENTE_SCHEMA (conexión por fuente), FUENTE_ALIASES ampliados, SOFT_DELETE por fuente, filtros con UI declarativa (`opciones` estáticas o `ajax` {url,clave,param,depende_de} → reutilizan los endpoints legacy /filtros/*), métricas con `sin_agg` para agregaciones embebidas (% completadas) y expresiones DATEDIFF/CASE.
+- Motor: conexión por FUENTE_SCHEMA; límite configurable por categoría (`cat['limite']`).
+- Wizard JS: pasoFiltros pinta selects desde catálogo y recarga destinos por `depende_de` (progresividad declarativa sin tocar handlers legacy).
+- Tests: test_reportes_constructor.py ahora 23 (consistencia global de alias/esquema/soft-delete/resumen-legado + un caso de ejecución por módulo). Suite total: 101 passed.
+
+### ✅ FASE 2 — Constructor visual (2026-08-25, hecha)
+- `ReportesConstructor.js` reescrito como asistente por pasos: Análisis → Dimensión (+grano temporal) → Filtros → Métricas → Visualización/Comparación → Resultado. Chips de progreso (done/active), footer Atrás/Siguiente→Generar.
+- Renderizadores SIN dependencias: tabla, barras CSS, torta conic-gradient con leyenda %, línea SVG (solo se ofrece si la dimensión es temporal; orden cronológico).
+- KPI cards de totales + fila Total en tabla + aviso de truncado + exportar CSV/PDF + "Ajustar"/"Nuevo análisis".
+- `dashboard.html`: tarjeta #wizardCard con estilos .wiz-* propios (tokens del sistema); el grid clásico y su panel quedan intactos — "Resumen general" delega al flujo de siempre.
+- Data-driven desde reportes_catalogo.py: los 11 módulos con constructor funcionan sin JS por módulo.

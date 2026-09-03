@@ -1,10 +1,10 @@
 import json
+from datetime import date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import INVENTARIO
 from app.model.inventario_model import InventarioModel, TipoRecursoModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('inventario', __name__, url_prefix='/inventario')
 
@@ -12,18 +12,8 @@ bp.before_request(verificar_acceso(INVENTARIO))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'inventario',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('inventario', tipo, accion, detalle)
 
 
 # ──────────────────────────────────────────────
@@ -216,8 +206,13 @@ def asignar(recurso_id):
         notas = request.form.get('notas', '').strip()
 
         errores = []
-        if not usuario_id:
+        if not usuario_id or not usuario_id.isdigit():
             errores.append('Debe seleccionar un usuario')
+        if fecha_devolucion:
+            try:
+                date.fromisoformat(fecha_devolucion)
+            except ValueError:
+                errores.append('La fecha de devolución no es válida')
         if obj_model.obtener_asignacion_activa(recurso_id):
             errores.append('El recurso ya est\u00e1 asignado actualmente')
         if recurso['estado_id'] != 1:
@@ -254,10 +249,15 @@ def asignar_desde_gestion():
     notas = request.form.get('notas', '').strip()
 
     errores = []
-    if not recurso_id:
+    if not recurso_id or not recurso_id.isdigit():
         errores.append('Debe seleccionar un recurso')
-    if not usuario_id:
+    if not usuario_id or not usuario_id.isdigit():
         errores.append('Debe seleccionar un usuario')
+    if fecha_devolucion:
+        try:
+            date.fromisoformat(fecha_devolucion)
+        except ValueError:
+            errores.append('La fecha de devolución no es válida')
 
     if not errores:
         obj_model.set_id_activo(int(recurso_id))

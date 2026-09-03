@@ -4,7 +4,6 @@ from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import PREMIO
 from app.model.premio_model import PremioModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('premio', __name__, url_prefix='/premio')
 
@@ -12,18 +11,8 @@ bp.before_request(verificar_acceso(PREMIO))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'premio',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('premio', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -121,7 +110,11 @@ def dashboard():
         if accion == 'entregar':
             if not current_user.tiene_permiso('premio.entregar'):
                 return jsonify({'error': 'No tienes permiso'}), 403
-            cantidad_entregar = int(request.form.get('cantidad_entregar', 1))
+            raw_cantidad = request.form.get('cantidad_entregar', '1')
+            raw_patrocinador = request.form.get('id_patrocinador')
+            if not str(raw_cantidad).isdigit() or not raw_patrocinador or not str(raw_patrocinador).isdigit():
+                return jsonify({'error': 'Cantidad o patrocinador inválido'}), 400
+            cantidad_entregar = int(raw_cantidad)
             p = obj_model.obtener_para_api(request.form.get('id_premio'))
             ok = obj_model.entregar(
                 request.form.get('id_premio'), request.form.get('id_patrocinador'),

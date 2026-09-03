@@ -14,13 +14,14 @@ class UsuariosReport(BaseReportGenerator):
         ('Rol', 'rol', 70), ('Depto', 'depto', 70), ('Estado', 'estado', 55),
     ]
 
-    def generate(self, datos, filtros=None, kpis=None):
+    def generate(self, datos, filtros=None, kpis=None, opciones=None):
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
         story = []
         story.extend(self._header(filtros))
         if kpis:
             story.extend(self._seccion_kpis(kpis))
+        story.extend(self._secciones_analisis(kpis, opciones))
         rows = self._build_rows(datos)
         if rows:
             header = [Paragraph(f"<b>{h}</b>", self.style_bold) for h, _, _ in self.COLUMNAS]

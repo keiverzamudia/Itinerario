@@ -71,6 +71,24 @@ class ValidacionesMixin:
             return False
         return True
 
+    REGEX_EMAIL = re.compile(r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$')
+
+    def validar_email(self, email, campo='Email'):
+        if not email:
+            return True
+        if not self.REGEX_EMAIL.match(str(email)):
+            self.errores.append(f'El campo {campo} no tiene un formato válido')
+            return False
+        return True
+
+    REGEX_RIF = re.compile(r'^[JjGgVvEe]-?\d{7,10}$')
+
+    def validar_rif(self, rif, campo='RIF'):
+        if not self.REGEX_RIF.match(str(rif or '')):
+            self.errores.append(f'El campo {campo} no tiene un formato válido (ej. J-12345678)')
+            return False
+        return True
+
     def get_errores(self):
         return self.errores
 

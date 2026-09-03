@@ -5,7 +5,6 @@ from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import USUARIO
 from app.model.usuario_model import UsuarioModel
 from app.model.rol_model import RolModel
-from app.model.bitacora_model import ActividadModel
 
 bp = Blueprint('usuario', __name__, url_prefix='/usuarios')
 
@@ -13,18 +12,8 @@ bp.before_request(verificar_acceso(USUARIO))
 
 
 def _registrar_bitacora(tipo, accion, detalle):
-    try:
-        ActividadModel().registrar({
-            'usuario_id': current_user.id,
-            'tipo_accion': tipo,
-            'modulo': 'usuario',
-            'accion': accion,
-            'detalle': json.dumps({'detalle': detalle}),
-            'pagina': request.path,
-            'ip_address': request.remote_addr,
-        })
-    except Exception:
-        pass
+    from app.helpers.bitacora_helper import registrar_bitacora
+    registrar_bitacora('usuario', tipo, accion, detalle)
 
 
 @bp.route('/', methods=['GET', 'POST'])
