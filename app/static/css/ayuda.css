@@ -1,0 +1,64 @@
+/* app/static/css/ayuda.css — Centro de Ayuda */
+
+.centro-ayuda .btn-filtro {
+    border-radius: 999px;
+    transition: all 0.2s ease;
+}
+
+.centro-ayuda .btn-filtro.activo {
+    background: var(--c-accion, #2563eb);
+    border-color: var(--c-accion, #2563eb);
+    color: #fff;
+}
+
+.centro-ayuda .grupo-categoria {
+    margin-bottom: 1rem;
+}
+
+.centro-ayuda .grupo-categoria .card-header {
+    background: linear-gradient(135deg, var(--c-navy, #132a60), var(--c-navy-claro, #1e3a5f)) !important;
+    border-bottom: 0;
+}
+
+.centro-ayuda .grupo-categoria .card-header i {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.centro-ayuda .accordion-button {
+    font-weight: 600;
+}
+
+.centro-ayuda .accordion-button:not(.collapsed) {
+    color: var(--c-navy, #132a60);
+    background-color: rgba(37, 99, 235, 0.06);
+    box-shadow: none;
+}
+
+.centro-ayuda .accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(37, 99, 235, 0.25);
+}
+
+.centro-ayuda .accordion-button::after {
+    color: var(--c-accion, #2563eb);
+}
+
+.centro-ayuda .accordion-body {
+    line-height: 1.65;
+    color: inherit;
+}
+
+.centro-ayuda .accordion-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.centro-ayuda .item-pregunta.d-none {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .centro-ayuda .accordion-body {
+        font-size: 0.95rem;
+    }
+}

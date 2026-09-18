@@ -1,0 +1,89 @@
+{% include 'components/head.html' %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ayuda.css') }}">
+{% endblock %}
+
+<div class="container-fluid px-4 py-4 centro-ayuda">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">
+                <i class="fas fa-circle-question me-2 text-primary"></i>Centro de Ayuda
+            </h1>
+            <p class="text-muted mb-0">Preguntas frecuentes sobre el sistema</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-transparent"><i class="fas fa-search"></i></span>
+                        <input type="text" id="busquedaAyuda" class="form-control"
+                               placeholder="Busca una pregunta… ej. 'en vivo', 'reporte', 'contraseña'">
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3" id="categoriasFiltro">
+                        <button type="button" class="btn btn-sm btn-primary btn-filtro activo" data-categoria="todas">Todas ({{ total_preguntas }})</button>
+                        {% for c in categorias %}
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-filtro" data-categoria="{{ c.categoria }}">{{ c.categoria }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4" id="listaPreguntas">
+        {% for c in categorias %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm grupo-categoria" data-categoria="{{ c.categoria }}">
+                <div class="card-header bg-dark text-white py-3 d-flex align-items-center gap-2">
+                    <i class="fas {{ c.icono }}"></i>
+                    <h5 class="mb-0 fw-bold">{{ c.categoria }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion accordion-flush" id="acordeon-{{ loop.index }}">
+                        {% set pregunta_global = namespace(indice=0) %}
+                        {% for p in c.preguntas %}
+                        <div class="accordion-item item-pregunta" data-pregunta="{{ p.pregunta }} {{ p.respuesta }}">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#pregunta-{{ pregunta_global.indice }}"
+                                        aria-expanded="false">
+                                    {{ p.pregunta }}
+                                </button>
+                            </h2>
+                            <div id="pregunta-{{ pregunta_global.indice }}" class="accordion-collapse collapse"
+                                 data-bs-parent="#acordeon-{{ loop.index }}">
+                                <div class="accordion-body">{{ p.respuesta }}</div>
+                            </div>
+                        </div>
+                        {% set pregunta_global.indice = pregunta_global.indice + 1 %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="text-center py-5 text-muted d-none" id="sinResultados">
+        <i class="fas fa-magnifying-glass mb-2 fa-2x"></i>
+        <p class="mb-0">No se encontraron preguntas para tu búsqueda.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body d-flex align-items-center gap-3">
+            <div class="kpi-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-robot"></i></div>
+            <div>
+                <h6 class="mb-1 fw-bold">¿No encuentras lo que buscas?</h6>
+                <p class="text-muted mb-0">Pregúntale al asistente <strong>Aurora</strong> (burbuja flotante) o consulta a un administrador del sistema.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'components/footer.html' %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/GestionAyuda.js') }}"></script>
+{% endblock %}
