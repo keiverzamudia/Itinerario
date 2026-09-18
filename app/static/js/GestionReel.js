@@ -20,7 +20,13 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         columns: [
             { data: 'nombre', className: 'text-center' },
-            { data: 'duracion_total', className: 'text-center', render: function(d) { return d ? Number(d).toFixed(2) + ' min' : '-'; } },
+            { data: 'duracion_total', className: 'text-center', render: function(d) {
+                if (!d) return '-';
+                const seg = Math.round(Number(d));
+                const m = Math.floor(seg / 60);
+                const s = seg % 60;
+                return m > 0 ? m + 'm ' + (s > 0 ? s + 's' : '') : s + 's';
+            } },
             {
                 data: null,
                 orderable: false,

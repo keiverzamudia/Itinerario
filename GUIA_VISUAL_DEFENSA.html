@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Visual — Defensa Itinerario</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        .header { text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 2px solid #3b82f6; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; color: #fff; margin-bottom: 10px; }
+        .header .subtitle { color: #94a3b8; font-size: 1.1rem; }
+        
+        /* Cards */
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #334155; }
+        .card h2 { color: #3b82f6; font-size: 1.4rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+        .card h2 .icon { font-size: 1.5rem; }
+        .card h3 { color: #60a5fa; font-size: 1.1rem; margin: 16px 0 8px 0; }
+        
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        
+        /* Stats */
+        .stat { background: #0f172a; border-radius: 8px; padding: 16px; text-align: center; border: 1px solid #334155; }
+        .stat .number { font-size: 2rem; font-weight: bold; color: #3b82f6; }
+        .stat .label { color: #94a3b8; font-size: 0.85rem; margin-top: 4px; }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #0f172a; color: #60a5fa; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        td { font-size: 0.9rem; }
+        tr:hover { background: #334155; }
+        
+        /* Code */
+        .code { background: #0f172a; border-radius: 8px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; border: 1px solid #334155; margin: 12px 0; }
+        .code .comment { color: #6b7280; }
+        .code .keyword { color: #c084fc; }
+        .code .string { color: #34d399; }
+        .code .function { color: #60a5fa; }
+        
+        /* Badges */
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-green { background: #065f46; color: #34d399; }
+        .badge-blue { background: #1e3a5f; color: #60a5fa; }
+        .badge-yellow { background: #713f12; color: #fbbf24; }
+        .badge-red { background: #7f1d1d; color: #f87171; }
+        
+        /* Flow */
+        .flow { display: flex; align-items: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+        .flow-step { background: #0f172a; border: 1px solid #3b82f6; border-radius: 8px; padding: 10px 16px; font-size: 0.85rem; }
+        .flow-arrow { color: #3b82f6; font-size: 1.2rem; }
+        
+        /* Demo section */
+        .demo-box { background: #0f172a; border: 2px dashed #3b82f6; border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .demo-box h3 { color: #fbbf24; margin-bottom: 12px; }
+        .demo-step { display: flex; gap: 12px; margin: 8px 0; align-items: flex-start; }
+        .demo-step .num { background: #3b82f6; color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8rem; }
+        }
+        
+        /* Print */
+        @media print {
+            body { background: #fff; color: #000; }
+            .card { border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- HEADER -->
+        <div class="header">
+            <h1>Guia Visual de Defensa</h1>
+            <p class="subtitle">Sistema Itinerario — Estadio Antonio Herrera Gutierrez</p>
+            <p style="color: #64748b; margin-top: 8px;">Cardenales de Lara — Temporada 2026</p>
+        </div>
+        
+        <!-- RESUMEN EJECUTIVO -->
+        <div class="card">
+            <h2><span class="icon">📊</span> Resumen Ejecutivo</h2>
+            <div class="grid grid-3">
+                <div class="stat">
+                    <div class="number">35</div>
+                    <div class="label">Tablas en BD</div>
+                </div>
+                <div class="stat">
+                    <div class="number">19</div>
+                    <div class="label">Modulos del Sistema</div>
+                </div>
+                <div class="stat">
+                    <div class="number">52</div>
+                    <div class="label">Permisos</div>
+                </div>
+            </div>
+            <div class="grid grid-3" style="margin-top: 12px;">
+                <div class="stat">
+                    <div class="number">73</div>
+                    <div class="label">Indices en BD</div>
+                </div>
+                <div class="stat">
+                    <div class="number">14</div>
+                    <div class="label">Reportes PDF</div>
+                </div>
+                <div class="stat">
+                    <div class="number">6</div>
+                    <div class="label">Usuarios de Prueba</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BAREMO -->
+        <div class="card">
+            <h2><span class="icon">✅</span> Cumplimiento del Baremo</h2>
+            <table>
+                <tr><th>#</th><th>Requisito</th><th>Estado</th><th>Donde buscar</th></tr>
+                <tr><td>1</td><td>Contrasenas cifradas</td><td><span class="badge badge-green">HECHO</span></td><td><code>app/model/usuario_model.py</code> linea 96</td></tr>
+                <tr><td>2</td><td>Sesiones de usuario</td><td><span class="badge badge-green">HECHO</span></td><td><code>app/__init__.py</code> lineas 113-126</td></tr>
+                <tr><td>3</td><td>Bitacora del sistema</td><td><span class="badge badge-green">HECHO</span></td><td><code>app/helpers/bitacora_helper.py</code></td></tr>
+                <tr><td>4</td><td>Validacion frontend + backend</td><td><span class="badge badge-green">HECHO</span></td><td><code>static/js/validacion.js</code> + <code>model/validaciones_model.py</code></td></tr>
+                <tr><td>5</td><td>Consulta con filtros</td><td><span class="badge badge-green">HECHO</span></td><td><code>app/helpers/reportes_utils.py</code></td></tr>
+                <tr><td>6</td><td>Confirmacion antes de eliminar</td><td><span class="badge badge-green">HECHO</span></td><td>SweetAlert2 en todos los templates CRUD</td></tr>
+                <tr><td>7</td><td>Captcha</td><td><span class="badge badge-green">HECHO</span></td><td><code>app/controller/auth_controller.py</code> lineas 20-44</td></tr>
+                <tr><td>8</td><td>Reportes PDF</td><td><span class="badge badge-green">HECHO</span></td><td><code>app/helpers/generators/</code> (14 archivos)</td></tr>
+                <tr><td>9</td><td>Vista SQL</td><td><span class="badge badge-green">HECHO</span></td><td><code>v_balance_contratos</code> en MySQL</td></tr>
+                <tr><td>10</td><td>Trigger</td><td><span class="badge badge-green">HECHO</span></td><td><code>trg_pagos_after_insert/update</code> en MySQL</td></tr>
+                <tr><td>11</td><td>Procedimiento</td><td><span class="badge badge-green">HECHO</span></td><td><code>sp_resumen_financiero</code> en MySQL</td></tr>
+                <tr><td>12</td><td>Respaldo de BD</td><td><span class="badge badge-green">HECHO</span></td><td><code>app/controller/rol_controller.py</code> ruta /respaldo</td></tr>
+            </table>
+        </div>
+        
+        <!-- ARQUITECTURA -->
+        <div class="card">
+            <h2><span class="icon">🏗️</span> Arquitectura MVC</h2>
+            <div class="flow">
+                <div class="flow-step">🌐 <strong>Browser</strong></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">🛣️ <strong>Controller</strong><br><small>app/controller/</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">📋 <strong>Model</strong><br><small>app/model/</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">🗄️ <strong>MySQL</strong><br><small>estadio_db + seguridad</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">📄 <strong>View</strong><br><small>app/view/</small></div>
+            </div>
+        </div>
+        
+        <!-- BASE DE DATOS -->
+        <div class="card">
+            <h2><span class="icon">🗄️</span> Base de Datos — Objetos SQL</h2>
+            
+            <h3>Vista: v_balance_contratos</h3>
+            <div class="code">
+                <span class="comment">-- Consultar balance de todos los contratos</span><br>
+                <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="function">v_balance_contratos</span>;<br><br>
+                <span class="comment">-- Solo contratos vigentes</span><br>
+                <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="function">v_balance_contratos</span><br>
+                <span class="keyword">WHERE</span> estatus_contrato = <span class="string">'Vigente'</span>;
+            </div>
+            <p><strong>Que hace:</strong> Une 3 tablas (contrato + patrocinadores + pagos) y calcula: monto pagado, saldo pendiente, % pagado, cantidad de pagos.</p>
+            
+            <h3>Triggers: Auditoria en pagos</h3>
+            <div class="code">
+                <span class="comment">-- Cuando INSERTAS un pago nuevo...</span><br>
+                <span class="comment">-- el trigger automaticamente registra en bitacora</span><br><br>
+                <span class="keyword">INSERT INTO</span> pagos (monto, ...) <span class="keyword">VALUES</span> (21250, ...);<br>
+                <span class="comment">-- → trg_pagos_after_insert escribe en actividad_usuario</span><br><br>
+                <span class="comment">-- Cuando MODIFICAS un pago...</span><br>
+                <span class="comment">-- el trigger guarda antes/despues en JSON</span><br><br>
+                <span class="keyword">UPDATE</span> pagos <span class="keyword">SET</span> monto = 25000 <span class="keyword">WHERE</span> id_pago = 1;<br>
+                <span class="comment">-- → trg_pagos_after_update guarda diff en bitacora</span>
+            </div>
+            <p><strong>Por que:</strong> Los pagos son datos sensibles (dinero). Aunque alguien ejecute SQL directo, queda la trazabilidad automatica.</p>
+            
+            <h3>Procedimiento: sp_resumen_financiero</h3>
+            <div class="code">
+                <span class="comment">-- Un solo llamado genera 4 reportes:</span><br>
+                <span class="keyword">CALL</span> <span class="function">sp_resumen_financiero</span>(<span class="string">'2026-01-01'</span>, <span class="string">'2026-12-31'</span>);<br><br>
+                <span class="comment">-- Result 1: Resumen de contratos</span><br>
+                <span class="comment">-- Result 2: Pagos recibidos</span><br>
+                <span class="comment">-- Result 3: Top-10 patrocinadores</span><br>
+                <span class="comment">-- Result 4: Contratos por vencer</span>
+            </div>
+            <p><strong>Por que:</strong> Evita 4 round-trips a la BD. Un solo comando genera todo el dashboard financiero.</p>
+        </div>
+        
+        <!-- SEED DATA -->
+        <div class="card">
+            <h2><span class="icon">🌱</span> Datos de Prueba — Estadio de Beisbol</h2>
+            <div class="grid grid-3">
+                <div class="stat">
+                    <div class="number">10</div>
+                    <div class="label">Patrocinadores</div>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">Maltin Polar, Pepsi, Banesco...</p>
+                </div>
+                <div class="stat">
+                    <div class="number">10</div>
+                    <div class="label">Contratos</div>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">$8K - $150K, todos vigentes</p>
+                </div>
+                <div class="stat">
+                    <div class="number">14</div>
+                    <div class="label">Pagos</div>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">$255,750 total cobrado</p>
+                </div>
+            </div>
+            <div class="grid grid-3" style="margin-top: 12px;">
+                <div class="stat">
+                    <div class="number">6</div>
+                    <div class="label">Guiones</div>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">1 finalizado, 5 borrador</p>
+                </div>
+                <div class="stat">
+                    <div class="number">30</div>
+                    <div class="label">Elementos de Guion</div>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">Pregame + Game + Postgame</p>
+                </div>
+                <div class="stat">
+                    <div class="number">12</div>
+                    <div class="label">Recursos</div>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">Camaras, mezcladora, etc.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- USUARIOS -->
+        <div class="card">
+            <h2><span class="icon">👤</span> Usuarios de Prueba</h2>
+            <table>
+                <tr><th>Email</th><th>Contrasena</th><th>Rol</th></tr>
+                <tr><td>keiver@cardenales.com</td><td><code>password123</code></td><td><span class="badge badge-blue">Superadmin</span></td></tr>
+                <tr><td>carlos@mendoza.com</td><td><code>password123</code></td><td><span class="badge badge-blue">Superadmin</span></td></tr>
+                <tr><td>ana.perez@outlook.com</td><td><code>password123</code></td><td><span class="badge badge-yellow">Administrador</span></td></tr>
+                <tr><td>genesis@cardenales.com</td><td><code>password123</code></td><td><span class="badge badge-yellow">Administrador</span></td></tr>
+                <tr><td>maria.gonzalez@gmail.com</td><td><code>password123</code></td><td><span class="badge badge-green">Usuario</span></td></tr>
+                <tr><td>roberto.diaz@hotmail.com</td><td><code>password123</code></td><td><span class="badge badge-green">Usuario</span></td></tr>
+            </table>
+        </div>
+        
+        <!-- DEMO EN VIVO -->
+        <div class="card">
+            <h2><span class="icon">🎯</span> Como Demostrar en la Defensa</h2>
+            
+            <div class="demo-box">
+                <h3>Paso 1: Login con Captcha</h3>
+                <div class="demo-step"><div class="num">1</div><div>Abrir http://localhost:5001</div></div>
+                <div class="demo-step"><div class="num">2</div><div>Ingrese: keiver@cardenales.com / password123</div></div>
+                <div class="demo-step"><div class="num">3</div><div>Resolver el captcha (4 tiles de beisbol)</div></div>
+                <div class="demo-step"><div class="num">4</div><div>Mostrar: si pone captcha mal, se rechaza</div></div>
+            </div>
+            
+            <div class="demo-box">
+                <h3>Paso 2: Sesion Unica</h3>
+                <div class="demo-step"><div class="num">1</div><div>Abra 2 navegadores (Chrome + Firefox) con el mismo usuario</div></div>
+                <div class="demo-step"><div class="num">2</div><div>En uno ingrese, en el otro verá que cierra automaticamente</div></div>
+            </div>
+            
+            <div class="demo-box">
+                <h3>Paso 3: CRUD Completo</h3>
+                <div class="demo-step"><div class="num">1</div><div>Vaya a Inventario → Cree un recurso nuevo</div></div>
+                <div class="demo-step"><div class="num">2</div><div>Edite el recurso</div></div>
+                <div class="demo-step"><div class="num">3</div><div>Elimine (SweetAlert pregunta "Seguro?")</div></div>
+            </div>
+            
+            <div class="demo-box">
+                <h3>Paso 4: Bitacora</h3>
+                <div class="demo-step"><div class="num">1</div><div>Vaya a Bitacora</div></div>
+                <div class="demo-step"><div class="num">2</div><div>Muestre: badge de rol + icono de ojo</div></div>
+                <div class="demo-step"><div class="num">3</div><div>Haga clic en el ojo → lleva al reporte del usuario</div></div>
+            </div>
+            
+            <div class="demo-box">
+                <h3>Paso 5: Objetos SQL en MySQL</h3>
+                <div class="demo-step"><div class="num">1</div><div>Abrir phpMyAdmin o terminal MySQL</div></div>
+                <div class="demo-step"><div class="num">2</div><div>Ejecutar: <code>SELECT * FROM v_balance_contratos;</code></div></div>
+                <div class="demo-step"><div class="num">3</div><div>Ejecutar: <code>SHOW TRIGGERS;</code></div></div>
+                <div class="demo-step"><div class="num">4</div><div>Ejecutar: <code>CALL sp_resumen_financiero('2026-01-01', '2026-12-31');</code></div></div>
+            </div>
+        </div>
+        
+        <!-- PREGUNTAS TRAMPA -->
+        <div class="card">
+            <h2><span class="icon">⚠️</span> Preguntas Trampa y Respuestas</h2>
+            <table>
+                <tr><th>Pregunta</th><th>Respuesta Correcta</th></tr>
+                <tr><td>"Por que no MD5?"</td><td>"Esta obsoleto. Use pbkdf2:sha256, estandar actual de OWASP."</td></tr>
+                <tr><td>"Por que no Apache?"</td><td>"Stack Python/Flask, no PHP. Gunicorn para produccion."</td></tr>
+                <tr><td>"Que pasa si falla la BD?"</td><td>"Error handler + rollback automatico en transacciones."</td></tr>
+                <tr><td>"Como escalas?"</td><td>"Mover SocketIO a Redis + multiples workers."</td></tr>
+                <tr><td>"Que es un trigger?"</td><td>"Es codigo SQL que se ejecuta automaticamente al INSERT/UPDATE/DELETE. En mi caso, audita pagos."</td></tr>
+                <tr><td>"Que es una vista?"</td><td>"Es una consulta guardada que se usa como tabla. Simplifica JOINs frecuentes."</td></tr>
+                <tr><td>"Que es un procedimiento?"</td><td>"Es un bloque de SQL reutilizable. Mi sp resumen genera 4 reportes en 1 llamada."</td></tr>
+            </table>
+        </div>
+        
+        <!-- ARCHIVOS CLAVE -->
+        <div class="card">
+            <h2><span class="icon">📁</span> Archivos Clave para la Defensa</h2>
+            <table>
+                <tr><th>Que</th><th>Archivo</th><th>Linea</th></tr>
+                <tr><td>Cifrado de contrasenas</td><td>app/model/usuario_model.py</td><td>96, 142, 184</td></tr>
+                <tr><td>Sesion unica</td><td>app/__init__.py</td><td>113-126</td></tr>
+                <tr><td>Captcha</td><td>app/controller/auth_controller.py</td><td>20-44</td></tr>
+                <tr><td>Bitacora helper</td><td>app/helpers/bitacora_helper.py</td><td>toda la linea</td></tr>
+                <tr><td>Validaciones JS</td><td>static/js/validacion.js</td><td>toda la linea</td></tr>
+                <tr><td>Validaciones Python</td><td>app/model/validaciones_model.py</td><td>toda la linea</td></tr>
+                <tr><td>Permisos</td><td>app/helpers/permission_map.py</td><td>toda la linea</td></tr>
+                <tr><td>Reportes PDF</td><td>app/helpers/generators/</td><td>14 archivos</td></tr>
+                <tr><td>Respaldo BD</td><td>app/controller/rol_controller.py</td><td>ruta /respaldo</td></tr>
+                <tr><td>Vista SQL</td><td>estadio_db.sql</td><td>Seccion 17</td></tr>
+                <tr><td>Triggers</td><td>estadio_db.sql</td><td>Seccion 18</td></tr>
+                <tr><td>Procedimiento</td><td>seed_procedure.sql</td><td>todo el archivo</td></tr>
+            </table>
+        </div>
+        
+        <!-- FOOTER -->
+        <div style="text-align: center; padding: 30px; color: #64748b; font-size: 0.85rem;">
+            <p>Sistema Itinerario v2.0 — Estadio Antonio Herrera Gutierrez</p>
+            <p>Cardenales de Lara — Temporada 2026</p>
+            <p style="margin-top: 8px;">Generado: 18 de septiembre 2026</p>
+        </div>
+        
+    </div>
+</body>
+</html>

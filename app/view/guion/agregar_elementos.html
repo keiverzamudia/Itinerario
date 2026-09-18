@@ -13,7 +13,10 @@
         </div>
         {% else %}
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom py-3 px-4">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center">
+                <a href="{{ url_for('guion.dashboard') }}" class="btn btn-sm btn-outline-secondary me-3" title="Volver a Guiones">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
                 <h5 class="fw-bold mb-0"><i class="fas fa-list me-2 text-primary"></i>Agregar Elemento</h5>
             </div>
             <div class="card-body">

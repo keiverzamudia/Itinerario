@@ -20,7 +20,7 @@ def _patrocinadores_select():
     return [(p['id_patrocinador'], p['nombre_empresa']) for p in PatrocinadorModel().consultar(activos=True)]
 
 
-def _parsear_duracion_minutos(texto):
+def _parsear_duracion_segundos(texto):
     if not texto:
         return 0
     texto = str(texto).strip()
@@ -28,9 +28,9 @@ def _parsear_duracion_minutos(texto):
         partes = texto.split(',')
         minutos = int(partes[0]) if partes[0] else 0
         seg_str = (partes[1] or '').ljust(2, '0')[:2]
-        return minutos + int(seg_str) / 60.0
+        return minutos * 60 + int(seg_str)
     try:
-        return float(texto)
+        return int(float(texto))
     except ValueError:
         return 0
 
@@ -95,7 +95,7 @@ def crear():
         if not nombre:
             flash('El nombre del reel es obligatorio', 'danger')
             return render_template('reels/agregar_reel.html', patrocinadores=_patrocinadores_select())
-        duracion = _parsear_duracion_minutos(request.form.get('duracion_total'))
+        duracion = _parsear_duracion_segundos(request.form.get('duracion_total'))
         reel = reel_model.registrar({
             'nombre': nombre,
             'duracion_total': duracion,
@@ -132,7 +132,7 @@ def editar(id):
             flash('El nombre del reel es obligatorio', 'danger')
             return render_template('reels/editar_reel.html', reel=reel, videos_json='[]',
                                    patrocinadores=_patrocinadores_select(), reel_duracion_texto='')
-        duracion = _parsear_duracion_minutos(request.form.get('duracion_total'))
+        duracion = _parsear_duracion_segundos(request.form.get('duracion_total'))
         reel = reel_model.modificar(id, {
             'nombre': nombre,
             'duracion_total': duracion,
@@ -147,7 +147,7 @@ def editar(id):
         'nombre': v['nombre'], 'duracion': v['duracion_segundos'],
         'patrocinador': v.get('id_patrocinador'),
     } for v in reel['videos']])
-    total_seg = int(round((reel['duracion_total'] or 0) * 60))
+    total_seg = int(reel['duracion_total'] or 0)
     mins = total_seg // 60
     segs = total_seg % 60
     reel_duracion_texto = f"{mins},{segs}" if segs else str(mins)

@@ -212,6 +212,14 @@ class MantenimientoModel(ValidacionesMixin):
             return None
 
     def modificar(self, id, datos):
+        if 'diagnostico' in datos and datos['diagnostico']:
+            if len(str(datos['diagnostico'])) < 10:
+                self.errores.append('El diagnóstico debe tener al menos 10 caracteres')
+                return None
+        if 'observaciones' in datos and datos['observaciones']:
+            if len(str(datos['observaciones'])) < 5:
+                self.errores.append('Las observaciones deben tener al menos 5 caracteres')
+                return None
         try:
             db = self._get_db()
             sets = []

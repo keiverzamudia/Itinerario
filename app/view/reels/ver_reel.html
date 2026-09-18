@@ -12,15 +12,39 @@
                     <h5 class="mb-0 fw-bold"><i class="fas fa-video me-2"></i>{{ reel.nombre }}</h5>
                 </div>
                 <div class="card-body">
+                    {% set total_plan = reel.duracion_total | int %}
+                    {% set total_consumido = reel.videos | map(attribute='duracion_segundos') | sum %}
+                    {% set porcentaje = ((total_consumido / total_plan) * 100) | int if total_plan > 0 else 0 %}
+                    {% set tp_m = total_plan // 60 %}
+                    {% set tp_s = total_plan % 60 %}
+                    {% set tc_m = total_consumido // 60 %}
+                    {% set tc_s = total_consumido % 60 %}
                     <table class="table table-borderless mb-0">
                         <tr>
-                            <th class="ps-0">Duración total</th>
+                            <th class="ps-0">Duración planificada</th>
+                            <td class="ps-0 fw-bold">{% if tp_m %}{{ tp_m }}m {% endif %}{{ tp_s }}s</td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0">Duración consumida</th>
                             <td class="ps-0">
-                                {% set total_seg = (reel.duracion_total * 60) | round | int %}
-                                {% set dm = total_seg // 60 %}
-                                {% set ds = total_seg % 60 %}
-                                {% if dm %}{{ dm }}m {% endif %}{{ ds }}s
+                                {% if tc_m %}{{ tc_m }}m {% endif %}{{ tc_s }}s
+                                <small class="text-muted">({{ porcentaje }}% del total)</small>
                             </td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0" colspan="2" class="p-0">
+                                {% set bar_color = '#198754' if porcentaje <= 80 else '#ffc107' if porcentaje <= 100 else '#dc3545' %}
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ [porcentaje, 100] | min }}%; background-color: {{ bar_color }};"></div>
+                                </div>
+                                {% if porcentaje > 100 %}
+                                <small class="text-danger fw-bold">Excede {{ porcentaje - 100 }}% la duración planificada</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0">Videos</th>
+                            <td class="ps-0">{{ reel.videos | length }}</td>
                         </tr>
                         <tr>
                             <th class="ps-0">Fecha de creación</th>

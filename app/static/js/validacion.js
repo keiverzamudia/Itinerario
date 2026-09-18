@@ -36,8 +36,8 @@ function validarCampo(campo, condicion, mensaje) {
 }
 
 export function validarNombre(campo) {
-    const valido = regExp.nombre.test(campo.value.trim());
-    validarCampo(campo, valido, 'El nombre debe tener entre 2 y 50 caracteres');
+    const valido = campo.value.trim().length >= 3 && campo.value.trim().length <= 50;
+    validarCampo(campo, valido, 'El nombre debe tener entre 3 y 50 caracteres');
     return valido;
 }
 

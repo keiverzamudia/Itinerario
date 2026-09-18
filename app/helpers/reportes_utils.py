@@ -38,7 +38,8 @@ def _filtrar_por_fecha(datos, campo_fecha, fecha_inicio, fecha_fin):
     for d in datos:
         val = d.get(campo_fecha)
         if not val:
-            resultado.append(d)
+            if not fecha_inicio and not fecha_fin:
+                resultado.append(d)
             continue
         try:
             if hasattr(val, 'date'):

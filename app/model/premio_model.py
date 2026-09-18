@@ -48,6 +48,8 @@ class PremioModel(ValidacionesMixin, CrudInterface):
             return False
         if not self.validar_entero_positivo(self.__id_patrocinador, 'Patrocinador'):
             return False
+        if not self.validar_entero_positivo(self.__cantidad, 'Cantidad'):
+            return False
         if self.__descripcion and not self.validar_longitud(self.__descripcion, 1, 500, 'Descripción'):
             return False
         return True

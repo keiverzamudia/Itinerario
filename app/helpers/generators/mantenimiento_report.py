@@ -10,8 +10,9 @@ class MantenimientoReport(BaseReportGenerator):
     MODULO = 'mantenimiento'
     TITULO = 'REPORTE DE MANTENIMIENTO'
     COLUMNAS = [
-        ('Recurso', 'recurso', 110), ('Estado', 'estado', 65),
-        ('Ingreso', 'ingreso', 65), ('Diagnóstico', 'diagnostico', 130),
+        ('Recurso', 'recurso', 100), ('Estado', 'estado', 55),
+        ('Ingreso', 'ingreso', 55), ('Días', 'dias_en_taller', 35),
+        ('Diagnóstico', 'diagnostico', 120),
     ]
 
     def generate(self, datos, filtros=None, kpis=None, opciones=None):
@@ -44,5 +45,6 @@ class MantenimientoReport(BaseReportGenerator):
             Paragraph(str(d.get('recurso_nombre', '—'))[:24], self.style_normal),
             str(d.get('estado', '—')),
             str(d.get('fecha_ingreso', ''))[:10] if d.get('fecha_ingreso') else '—',
+            str(d.get('dias_en_taller', '—')),
             str(d.get('diagnostico', '—'))[:28],
         ] for d in datos]

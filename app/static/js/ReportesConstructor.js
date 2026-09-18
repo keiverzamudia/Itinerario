@@ -391,7 +391,7 @@ async function ejecutar() {
             }),
         });
         const data = await res.json();
-        if (data.error) { Swal.fire('Error', data.error, 'error'); return; }
+        if (data.error) { Swal.fire('Error', data.error + (data.detalle ? '\n' + data.detalle : ''), 'error'); return; }
         renderResultado(data);
     } catch (err) {
         Swal.fire('Error', 'Error de conexión', 'error');

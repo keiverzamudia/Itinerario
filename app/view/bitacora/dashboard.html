@@ -96,13 +96,21 @@
                                         <a href="{{ url_for('bitacora.reporte_usuario', usuario_id=act.usuario.id) }}" class="text-decoration-none fw-semibold">
                                             {{ act.usuario.nombre }}
                                         </a>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary ms-1 small">{{ act.usuario.rol }}</span>
                                         {% else %}
                                         <span class="text-muted">Usuario #{{ act.usuario_id }}</span>
                                         {% endif %}
                                     </td>
                                     <td>{{ act.accion or act.tipo_accion }}</td>
                                     <td><span class="badge bg-secondary rounded-pill px-3 py-1">{{ act.modulo }}</span></td>
-                                    <td class="small text-muted">{{ act.created_at.strftime('%d/%m %H:%M') if act.created_at else '' }}</td>
+                                    <td class="small text-muted">
+                                        {{ act.created_at.strftime('%d/%m %H:%M') if act.created_at else '' }}
+                                        {% if act.usuario %}
+                                        <a href="{{ url_for('bitacora.reporte_usuario', usuario_id=act.usuario.id) }}" class="ms-2 text-primary" title="Ver actividad de {{ act.usuario.nombre }}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

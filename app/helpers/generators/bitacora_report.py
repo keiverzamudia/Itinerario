@@ -45,6 +45,6 @@ class BitacoraReport(BaseReportGenerator):
             str(d.get('usuario_nombre', '—'))[:18],
             str(d.get('tipo_accion', '—')),
             str(d.get('modulo', '—')),
-            str(d.get('accion', '—'))[:30],
+            str(d.get('detalle', '') or d.get('accion', '—'))[:30],
             str(d.get('created_at', ''))[:16] if d.get('created_at') else '—',
         ] for d in datos]

@@ -78,7 +78,7 @@ DEFAULT_SCHEMA = 'estadio_db'
 # Soft-delete / vigencia por fuente (flags heterogéneos documentados en el esquema)
 SOFT_DELETE = {
     'contratos': 'c.estado = 1',
-    'pagos': 'pg.estado = 0',
+    'pagos': 'pg.estado = 1',
     'bitacora_actividad': None,
     'guiones': 'g.status = 1',
     'elementos_guion': 'g.status = 1',
@@ -420,9 +420,9 @@ FILTROS_BUILDER = {
                            'label': 'Patrocinador',
                            'ajax': {'url': '/reportes/filtros/reels',
                                     'clave': 'patrocinadores'}},
-    're_duracion_min': {'campo_sql': '(re.duracion_total * 60)', 'coercion': 'float_min',
+    're_duracion_min': {'campo_sql': 're.duracion_total', 'coercion': 'float_min',
                         'label': 'Duración mínima (seg)'},
-    're_duracion_max': {'campo_sql': '(re.duracion_total * 60)', 'coercion': 'float_max',
+    're_duracion_max': {'campo_sql': 're.duracion_total', 'coercion': 'float_max',
                         'label': 'Duración máxima (seg)'},
     're_fecha': {'campo_sql': 're.creado_en', 'coercion': 'rango_fecha',
                  'label': 'Fecha de creación'},

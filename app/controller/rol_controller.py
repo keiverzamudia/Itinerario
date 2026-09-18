@@ -1,12 +1,16 @@
 import json
 import logging
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+import subprocess
+import os
+from datetime import datetime
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import current_user
 from app.helpers.decorators import verificar_acceso
 from app.helpers.permission_map import ROL
 from app.model.rol_model import (RolModel, PermisoModel, RolPermisoModel,
                                   UsuarioPermisoModel, DashboardVisibilidadModel,
                                   MODULOS_DASHBOARD_INFO)
+from app.config import DATABASE_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +139,52 @@ def editar_rol(id):
                            modulos_dashboard_info=MODULOS_DASHBOARD_INFO,
                            dashboard_visibles_rol=dashboard_visibles_rol,
                            total_usuarios=total_usuarios)
+
+
+@bp.route('/respaldo', methods=['POST'], endpoint='respaldo')
+def respaldo():
+    _registrar_bitacora('create', 'Respaldar BD', 'Respaldo completo de estadio_db solicitado')
+    try:
+        cfg = DATABASE_CONFIG['estadio_db']
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        nombre_archivo = f'estadio_db_respaldo_{timestamp}.sql'
+        backup_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static', 'reportes', 'backups')
+        os.makedirs(backup_dir, exist_ok=True)
+        ruta_completa = os.path.join(backup_dir, nombre_archivo)
+
+        mysqldump_path = None
+        for candidate in [
+            '/Applications/XAMPP/xamppfiles/bin/mysqldump',
+            '/usr/local/mysql/bin/mysqldump',
+            '/usr/bin/mysqldump',
+        ]:
+            if os.path.isfile(candidate):
+                mysqldump_path = candidate
+                break
+        if not mysqldump_path:
+            import shutil
+            mysqldump_path = shutil.which('mysqldump')
+        if not mysqldump_path:
+            return jsonify({'error': 'mysqldump no encontrado en el servidor'}), 500
+
+        cmd = [mysqldump_path, f'--host={cfg["host"]}', f'--user={cfg["user"]}']
+        if cfg.get('password'):
+            cmd.append(f'--password={cfg["password"]}')
+        cmd += ['--single-transaction', '--triggers', 'estadio_db']
+
+        resultado = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        dump_sql = resultado.stdout
+        if not dump_sql or len(dump_sql) < 100:
+            logger.error('mysqldump falló: %s', resultado.stderr)
+            return jsonify({'error': 'Error al generar respaldo', 'detalle': resultado.stderr}), 500
+        with open(ruta_completa, 'w', encoding='utf-8') as f:
+            f.write(dump_sql)
+        return send_file(ruta_completa, as_attachment=True, download_name=nombre_archivo, mimetype='application/sql')
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Timeout al generar respaldo'}), 500
+    except Exception:
+        logger.exception('Error generando respaldo')
+        return jsonify({'error': 'Error interno al generar respaldo'}), 500
 
 
 @bp.route('/crear', methods=['GET', 'POST'])

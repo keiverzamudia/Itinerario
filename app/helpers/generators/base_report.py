@@ -78,7 +78,7 @@ class BaseReportGenerator:
         story.append(Paragraph(self.TITULO, self.style_titulo))
 
         if filtros:
-            orden = filtros.pop('orden', None)
+            orden = filtros.get('orden')
             filtros_texto = ', '.join(
                 f"{k}: {v}" for k, v in filtros.items() if v
             )

@@ -66,8 +66,16 @@
                         </div>
                         <div class="col-md-6">
                             <label for="rif" class="form-label fw-bold">RIF <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="rif" maxlength="12" required>
-                            <div class="invalid-feedback">El RIF es obligatorio</div>
+                            <div class="input-group">
+                                <select class="form-select" id="rif_tipo" style="max-width:80px;" required>
+                                    <option value="V">V</option>
+                                    <option value="E">E</option>
+                                    <option value="J" selected>J</option>
+                                    <option value="G">G</option>
+                                </select>
+                                <input type="text" class="form-control" id="rif" placeholder="Solo números" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" required>
+                            </div>
+                            <div class="invalid-feedback">El RIF debe tener entre 7 y 10 dígitos</div>
                         </div>
                         <div class="col-md-6">
                             <label for="tipo_contrato" class="form-label fw-bold">Tipo de Contrato <span class="text-danger">*</span></label>
@@ -93,8 +101,9 @@
                     </div>
                     <div class="row g-3 mt-2">
                         <div class="col-md-6">
-                            <label for="nombre_contacto" class="form-label fw-bold">Nombre del Contacto</label>
-                            <input type="text" class="form-control" id="nombre_contacto" maxlength="50">
+                            <label for="nombre_contacto" class="form-label fw-bold">Nombre del Contacto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nombre_contacto" maxlength="50" required>
+                            <div class="invalid-feedback">El nombre del contacto es obligatorio</div>
                         </div>
                         <div class="col-md-6">
                             <label for="encargado_id" class="form-label fw-bold">Encargado <span class="text-danger">*</span></label>

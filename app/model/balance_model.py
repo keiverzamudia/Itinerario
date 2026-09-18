@@ -139,7 +139,7 @@ class Pago(Database, ValidacionesMixin):
             db = self._get_db()
             with db.cursor() as cur:
                 cur.execute(
-                    "SELECT COALESCE(SUM(monto), 0) as total FROM pagos WHERE id_contrato = %s AND estado = 0",
+                    "SELECT COALESCE(SUM(monto), 0) as total FROM pagos WHERE id_contrato = %s AND estado = 1",
                     (id_contrato,)
                 )
                 row = cur.fetchone()
@@ -152,7 +152,7 @@ class Pago(Database, ValidacionesMixin):
         try:
             db = self._get_db()
             with db.cursor() as cur:
-                cur.execute("SELECT COALESCE(SUM(monto), 0) as total FROM pagos WHERE estado = 0")
+                cur.execute("SELECT COALESCE(SUM(monto), 0) as total FROM pagos WHERE estado = 1")
                 row = cur.fetchone()
                 return float(row['total']) if row else 0.0
         except Exception as e:
@@ -169,7 +169,7 @@ class Pago(Database, ValidacionesMixin):
                     FROM pagos p
                     LEFT JOIN contrato c ON p.id_contrato = c.id_contrato
                     LEFT JOIN patrocinadores pat ON c.id_patrocinador = pat.id_patrocinador
-                    WHERE p.estado = 0"""
+                    WHERE p.estado = 1"""
             params = []
             if fecha_inicio:
                 sql += " AND p.fecha_pago >= %s"

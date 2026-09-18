@@ -85,6 +85,7 @@ function resetFormPatrocinador() {
     const form = document.getElementById('formPatrocinador');
     form.reset();
     document.getElementById('tipo_contrato').value = '1';
+    document.getElementById('rif_tipo').value = 'J';
     form.querySelectorAll('.is-invalid, .is-valid').forEach(function(el) {
         el.classList.remove('is-invalid', 'is-valid');
     });
@@ -115,7 +116,14 @@ async function editarPatrocinador(id) {
         const d = data.datos;
         document.getElementById('idPatrocinador').value = d.id_patrocinador;
         document.getElementById('nombre_empresa').value = d.nombre_empresa;
-        document.getElementById('rif').value = d.rif;
+        const rifParts = (d.rif || '').match(/^([VVEJGvvejg])-?(\d+)$/i);
+        if (rifParts) {
+            document.getElementById('rif_tipo').value = rifParts[1].toUpperCase();
+            document.getElementById('rif').value = rifParts[2];
+        } else {
+            document.getElementById('rif_tipo').value = 'J';
+            document.getElementById('rif').value = d.rif || '';
+        }
         document.getElementById('tipo_contrato').value = d.tipo_contrato;
         document.getElementById('nombre_contacto').value = d.nombre_contacto || '';
         document.getElementById('telefono').value = d.telefono || '';
@@ -173,8 +181,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ponytail: validación en vivo (input + blur)
     document.getElementById('nombre_empresa')?.addEventListener('input', function() { v.validarRazonSocial(this); });
-    document.getElementById('rif')?.addEventListener('input', function() { v.validarRif(this); });
-    document.getElementById('rif')?.addEventListener('blur', function() { v.validarRif(this); });
+    function getRifCampo() {
+        const tipo = document.getElementById('rif_tipo').value;
+        const num = document.getElementById('rif').value;
+        return { tipo, num, completo: tipo + num };
+    }
+    function validarRifSplit() {
+        const { tipo, num, completo } = getRifCampo();
+        const campo = document.getElementById('rif');
+        if (!num) { v.limpiarInvalido(campo); return false; }
+        const ok = /^[VVEJGvvejg]-?\d{7,10}$/.test(completo);
+        const feedback = campo.closest('.input-group')?.parentElement?.querySelector('.invalid-feedback');
+        if (ok) { campo.classList.remove('is-invalid'); campo.classList.add('is-valid'); if (feedback) feedback.textContent = ''; }
+        else { campo.classList.add('is-invalid'); campo.classList.remove('is-valid'); if (feedback) feedback.textContent = 'El RIF debe tener entre 7 y 10 dígitos'; }
+        return ok;
+    }
+    document.getElementById('rif')?.addEventListener('input', validarRifSplit);
+    document.getElementById('rif')?.addEventListener('blur', validarRifSplit);
+    document.getElementById('rif_tipo')?.addEventListener('change', function() {
+        const rifCampo = document.getElementById('rif');
+        if (rifCampo.value) validarRifSplit();
+    });
+    document.getElementById('nombre_contacto')?.addEventListener('input', function() {
+        if (this.value) v.validarNombre(this);
+        else v.limpiarInvalido(this);
+    });
+    document.getElementById('nombre_contacto')?.addEventListener('blur', function() {
+        if (this.value) v.validarNombre(this);
+        else v.limpiarInvalido(this);
+    });
     document.getElementById('telefono')?.addEventListener('input', function() {
         if (this.value) v.validarTelefono(this);
         else v.limpiarInvalido(this);
@@ -223,7 +258,9 @@ document.addEventListener('DOMContentLoaded', function() {
             params.append('editar', id);
         }
         params.append('nombre_empresa', document.getElementById('nombre_empresa').value.trim());
-        params.append('rif', document.getElementById('rif').value.trim());
+        const rifTipo = document.getElementById('rif_tipo').value;
+        const rifNum = document.getElementById('rif').value.trim();
+        params.append('rif', rifTipo + rifNum);
         params.append('tipo_contrato', document.getElementById('tipo_contrato').value);
         params.append('nombre_contacto', document.getElementById('nombre_contacto').value.trim());
         params.append('telefono', document.getElementById('telefono').value.trim());

@@ -162,7 +162,7 @@ def _datos_<modulo>(filtros: dict, fi, ff) -> tuple[list[dict], dict]:
 - **Escalabilidad:** baja tal cual — con cientos de mantenimientos e historiales largos, el reporte dispara miles de queries. Ruta concreta: 3 consultas planas (`mantenimientos LEFT JOIN recursos`, `usuarios`, `historial_mantenimiento` en bloque) y agrupar en Python por `mantenimiento_id`. Es el primer candidato a refactor si el reporte se vuelve lento.
 
 ### 5.10 REELS
-- **Negocio:** videos resumen (reels) para redes sociales; cada reel agrupa clips con orden, duración por clip y patrocinador asociado. `duracion_total` se guarda en MINUTOS float.
+- **Negocio:** videos resumen (reels) para redes sociales; cada reel agrupa clips con orden, duración por clip y patrocinador asociado. `duracion_total` se guarda en SEGUNDOS.
 - **Filtros:** `patrocinador_id` (AJAX), `duracion_min/max` (**en segundos**; el código multiplica minutos×60, L619), fechas (`creado_en`).
 - **Enriquecimiento:** `videos_count`, `duracion` formateada ("3m 30s"), `videos_detalle` (texto multilínea "1. nombre (dur)").
 - **KPIs:** `total`, `total_videos`, `duracion_total` (min), `duracion_promedio`.
@@ -238,7 +238,7 @@ historial_mantenimiento(id, mantenimiento_id, usuario_id, accion varchar50,
          descripcion text, creado_en datetime)
 
 -- REELS
-reels(id, nombre varchar100, id_patrocinador, duracion_total float /*MINUTOS*/,
+reels(id, nombre varchar100, id_patrocinador, duracion_total float /*SEGUNDOS*/,
          creado_en, modificado_en)
 videos(id, nombre varchar200, duracion_segundos int, orden int, reel_id, id_patrocinador)
 ```

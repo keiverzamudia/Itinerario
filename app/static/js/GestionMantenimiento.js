@@ -82,13 +82,13 @@ document.addEventListener('DOMContentLoaded', function () {
         diagnostico.addEventListener('input', function () {
             var v = this.value.trim();
             if (!v) this.classList.remove('is-valid', 'is-invalid');
-            else if (v.length >= 3) mostrarValido(this);
-            else mostrarError(this, 'Mínimo 3 caracteres');
+            else if (v.length >= 10) mostrarValido(this);
+            else mostrarError(this, 'Mínimo 10 caracteres');
         });
         diagnostico.addEventListener('blur', function () {
             var v = this.value.trim();
             if (!v) mostrarError(this, 'El diagnóstico es obligatorio');
-            else if (v.length < 3) mostrarError(this, 'Mínimo 3 caracteres');
+            else if (v.length < 10) mostrarError(this, 'Mínimo 10 caracteres');
             else mostrarValido(this);
         });
     }
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!fechaIngreso.value) { mostrarError(fechaIngreso, 'La fecha de ingreso es obligatoria'); ok = false; } else mostrarValido(fechaIngreso);
             var diag = diagnostico.value.trim();
             if (!diag) { mostrarError(diagnostico, 'El diagnóstico es obligatorio'); ok = false; }
-            else if (diag.length < 3) { mostrarError(diagnostico, 'Mínimo 3 caracteres'); ok = false; }
+            else if (diag.length < 10) { mostrarError(diagnostico, 'Mínimo 10 caracteres'); ok = false; }
             else mostrarValido(diagnostico);
             if (!ok) {
                 e.preventDefault();

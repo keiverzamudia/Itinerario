@@ -1,300 +1,292 @@
-# GUÍA DEFINITIVA DE DEFENSA — Sistema Itinerario
+# GUIA DEFINITIVA DE DEFENSA — v2.0 Actualizada
 
-## Resumen Ejecutivo del Sistema
-
-| Requisito del baremo | ¿Lo tienes? | Dónde |
-|---|---|---|
-| Contraseñas cifradas | ✅ Sí (mejor que MD5) | `werkzeug pbkdf2:sha256` en `usuario_model.py:96,142,184` |
-| Sesiones de usuario | ✅ Sí | `Flask-Login` + sesión única forzada `__init__.py:113-126` |
-| Bitácora | ✅ Sí (muy completa) | `bitacora_helper.py` + 40+ llamadas en 12 controladores |
-| Validación frontend + backend | ✅ Sí (22 funciones JS + mixin Python) | `static/js/validacion.js` + `model/validaciones_model.py` |
-| Consulta con filtros | ✅ Sí | DataTables + filtros backend + filtros de reportes progresivos |
-| Confirmación antes de eliminar | ✅ Sí | SweetAlert2 en todos los módulos |
-| Captcha | ✅ Sí (temático béisbol) | `auth_controller.py:20-44` + `captcha_baseball.html` |
-| Reportes PDF | ✅ Sí (14 generadores) | `helpers/generators/` con KPIs, resumen ejecutivo, Top-N |
-| **Vistas SQL** | ❌ **NO** | No hay `CREATE VIEW` en ningún `.sql` |
-| **Procedimientos/Funciones** | ❌ **NO** | No hay `CREATE PROCEDURE` ni `CREATE FUNCTION` |
-| **Triggers** | ❌ **NO** | No hay `CREATE TRIGGER` en ningún `.sql` |
+## Sistema: Itinerario — Estadio Antonio Herrera Gutierrez
 
 ---
 
-## A. SISTEMA Y PROGRAMACIÓN (20%)
+## CHECK RAPIDO: CUMPLIMIENTO DEL BAREMO
 
-### Pregunta: "¿Qué validaciones tiene el sistema?"
+| # | Requisito | Estado | Ubicacion |
+|---|-----------|--------|-----------|
+| 1 | Contrasenas cifradas | ✅ | `werkzeug pbkdf2:sha256` → `usuario_model.py` |
+| 2 | Sesiones de usuario | ✅ | Flask-Login + sesion unica → `__init__.py:113-126` |
+| 3 | Bitacora del sistema | ✅ | `bitacora_helper.py` + 40+ puntos en 12 controladores |
+| 4 | Validacion frontend + backend | ✅ | 22 funcs JS (`validacion.js`) + mixin Python |
+| 5 | Consulta con filtros | ✅ | DataTables + filtros backend + filtros progresivos |
+| 6 | Confirmacion antes de eliminar | ✅ | SweetAlert2 en todos los modulos CRUD |
+| 7 | Captcha | ✅ | Captcha de beisbol custom → `auth_controller.py` |
+| 8 | Reportes PDF parametrizados | ✅ | 14 generadores con KPIs y Top-N |
+| 9 | Vista SQL | ✅ | `v_balance_contratos` |
+| 10 | Trigger | ✅ | `trg_pagos_after_insert` + `trg_pagos_after_update` |
+| 11 | Procedimiento almacenado | ✅ | `sp_resumen_financiero` |
+| 12 | Respaldo de BD | ✅ | Boton "Respaldar BD" en Roles |
 
-**Tu respuesta:** Mi sistema tiene validación en **dos capas**:
+---
 
-1. **Frontend** — 22 funciones de validación en `static/js/validacion.js` (nombre, email, cédula, teléfono, fecha, RIF, costo, etc.) que aplican clases CSS `is-invalid`/`is-valid` en tiempo real. Cada módulo tiene su propio archivo en `static/js/validaciones/`:
-   - `GestionUsuarioValidacion.js` — nombre, email, cédula, rol, departamento, teléfono, contraseña
-   - `GestionInventarioValidacion.js` — tipo, nombre, descripción, fecha
-   - `GestionPatrocinadorValidacion.js` — empresa, RIF, tipo contrato, teléfono, email
-   - `GestionRolValidacion.js` — nombre, descripción
-   - `GestionContratoValidacion.js` — patrocinador, tipo, fechas, monto, estatus
+## A. SISTEMA Y PROGRAMACION (20%)
 
-2. **Backend** — Un mixin reutilizable `ValidacionesMixin` en `app/model/validaciones_model.py` con métodos: `validar_obligatorio`, `validar_longitud`, `validar_email`, `validar_rif`, `validar_fecha`, `sanitizar_texto`. Los 13 modelos lo heredan.
+### A.1 Validaciones — Doble capa
 
-### Pregunta: "¿Cómo funciona la seguridad?"
+**Frontend** — 22 funciones en `static/js/validacion.js`:
+- `validarNombre`, `validarEmail`, `validarPassword`, `validarCedula`
+- `validarTelefono`, `validarFecha`, `validarHora`, `validarSelect`
+- `validarTexto`, `validarTextoLargo`, `validarDescripcion`
+- `validarRif`, `validarCosto`, `validarCantidad`, `validarCodigo`
+- Cada modulo tiene su archivo: `GestionUsuarioValidacion.js`, `GestionInventarioValidacion.js`, `GestionPatrocinadorValidacion.js`, `GestionRolValidacion.js`, `GestionContratoValidacion.js`
 
-**Tu respuesta:** Mi sistema tiene **5 capas de seguridad**:
+**Backend** — `ValidacionesMixin` en `model/validaciones_model.py`:
+- `validar_obligatorio`, `validar_longitud`, `validar_email`, `validar_rif`, `validar_fecha`, `sanitizar_texto`
+- Los 13 modelos lo heredan y cada uno tiene `_validar_datos_*()`
 
-1. **Cifrado de contraseñas** con `werkzeug.security.generate_password_hash` (algoritmo `pbkdf2:sha256`, más seguro que MD5). El baremo pide MD5, pero usé el estándar actual de la industria.
-2. **Sesiones** con Flask-Login + sesión única: si alguien inicia sesión desde otro dispositivo, la anterior se cierra automáticamente (`__init__.py:113-126`).
-3. **Captcha** personalizado con temática de béisbol: genera 4 caracteres aleatorios, los renderiza como tiles rotados/coloreados, y valida server-side con `session.pop()`.
-4. **CSRF** global con Flask-WTF: token oculto en los 47+ formularios del sistema.
-5. **Permisos** por ruta: 13 blueprints usan `before_request` con `verificar_acceso(PERMISSION_MAP)` que verifica el código de permiso del usuario contra la BD.
+### A.2 Seguridad — 5 capas
 
-### Pregunta: "¿Cómo funciona la bitácora?"
+1. **Cifrado**: `pbkdf2:sha256` via Werkzeug (mas seguro que MD5)
+2. **Sesiones**: Flask-Login + sesion unica forzada en `before_request`
+3. **Captcha**: 4 tiles rotados/coloreados, validacion server-side con `session.pop()`
+4. **CSRF**: Flask-WTF global, token en 47+ formularios
+5. **Permisos**: `before_request` con `verificar_acceso(PERMISSION_MAP)` en 13 blueprints
 
-**Tu respuesta:** La bitácora está centralizada en `app/helpers/bitacora_helper.py`. Cada controlador llama a `registrar_bitacora(modulo, tipo, accion, detalle)` que inserta en la tabla `seguridad.actividad_usuario` con: usuario_id, tipo_accion, modulo, accion, detalle (JSON), página, IP y timestamp. Hay **40+ puntos de registro** en 12 controladores. El helper tiene `try/except` para que un fallo de bitácora nunca rompa la operación principal.
+### A.3 Bitacora — Trazabilidad completa
 
-### Pregunta: "¿Cómo funcionan los reportes?"
+- **Tabla**: `seguridad.actividad_usuario` (usuario_id, tipo_accion, modulo, accion, detalle JSON, pagina, ip, timestamp)
+- **Helper centralizado**: `bitacora_helper.registrar_bitacora(modulo, tipo, accion, detalle)`
+- **40+ puntos de registro** en 12 controladores
+- **Respaldo DB-level**: Triggers en `pagos` alimentan la misma tabla automaticamente
+- **Dashboard**: Muestra rol del usuario junto al nombre + icono de ojo para ver detalle
 
-**Tu respuesta:** Tengo **14 generadores PDF** heredando de `BaseReportGenerator` en `helpers/generators/`. Cada módulo tiene el suyo. Los reportes incluyen: encabezado con datos del usuario, filtros aplicados, KPIs calculados, distribuciones por categoría, resumen ejecutivo, Top-N destacados y comparativa con período anterior. El sistema tiene filtros **progresivos** (ej: seleccionar tipo de inventario filtra los estados disponibles).
+### A.4 Reportes PDF — 14 generadores
+
+Cada modulo tiene su generador heredando de `BaseReportGenerator`:
+- Encabezado con datos del usuario y filtros aplicados
+- KPIs calculados (totales, promedios, porcentajes)
+- Distribuciones por categoria
+- Resumen ejecutivo + Top-N + Comparativa de periodos
+- **Filtros progresivos**: seleccionar tipo → filtra estados disponibles
 
 ---
 
 ## B. BASE DE DATOS (10%)
 
-### Diseño de la BD
+### B.1 Diseno
 
-- **Dos esquemas separados**: `estadio_db` (negocio, 20 tablas) y `seguridad` (usuarios/auditoría, 15 tablas).
-- **35 tablas normalizadas a 3NF** con PKs auto-increment, UNIQUE constraints e índices.
-- Las tablas de catálogo (`estado_asignacion`, `estado_recurso`, `tipo_recurso`, `departamentos`) son tablas lookup correctas.
-- Las FKs cross-schema (ej: `tareas.usuario_id` → `seguridad.usuarios`) se aplican en código, no en BD (MySQL no permite FKs entre esquemas).
+- **2 esquemas**: `estadio_db` (20 tablas, negocio) + `seguridad` (15 tablas, usuarios/auditoria)
+- **35 tablas en 3NF** con PKs auto-increment, UNIQUE constraints
+- **73 indices** entre ambos esquemas
+- Tablas lookup: `estado_asignacion`, `estado_recurso`, `tipo_recurso`, `departamentos`
+- FKs cross-schema aplicadas en codigo (MySQL no permite FKs entre esquemas)
 
-### Índices
+### B.2 Vista SQL — `v_balance_contratos`
 
-- **73 índices** entre ambos esquemas.
-- Los más importantes:
-  - `idx_usuario_leida` (notificaciones compuesto: usuario_id + leida)
-  - `idx_grupo_id` (guiones por grupo)
-  - `idx_mantenimientos_estado`, `idx_mantenimientos_recurso`
-  - `idx_asignaciones_recurso`, `idx_asignaciones_estado`
+```sql
+-- Une contratos + patrocinadores + pagos en una sola vista
+-- Devuelve: monto_total, monto_pagado, saldo_pendiente, porcentaje_pagado, cantidad_pagos
+SELECT * FROM v_balance_contratos WHERE estatus_contrato = 'Vigente';
+```
 
-### Concurrencia
+**Como defenderla:** "Creé una vista que responde la pregunta mas frecuente del negocio: 'cuanto ha pagado cada patrocinador vs. lo contratado?' Sin repetir el JOIN de 3 tablas en cada consulta."
 
-- Tu sistema usa `autocommit(True)` por defecto y un context manager `transaction()` para escrituras multi-statement (`app/database.py:33-44`).
-- El nivel de aislamiento es el default de MySQL (REPEATABLE READ).
-- **No usas** `SELECT FOR UPDATE`, `LOCK TABLES` ni columnas de versión para concurrencia optimista.
+### B.3 Triggers — Auditoria financiera en `pagos`
 
-### Pregunta típica: "¿Qué pasa si dos usuarios editan el mismo registro?"
+- `trg_pagos_after_insert`: Captura cada pago nuevo → inserta en `actividad_usuario`
+- `trg_pagos_after_update`: Captura modificaciones (monto, estado, referencia) → inserta diff antes/despues en JSON
 
-**Tu respuesta:** Mi sistema maneja la concurrencia a nivel de aplicación con transacciones atómicas (`transaction()` context manager en `app/database.py`). Para escrituras multi-statement (como asignar tareas que cruza esquemas), uso una transacción que hace `commit` atómico o `rollback`. En caso de fallo, la excepción se propaga y se revierte. Para el volumen actual (~30 usuarios simultáneos), el nivel REPEATABLE READ de MySQL es adecuado.
+**Como defenderlo:** "Los pagos son los datos mas sensibles (dinero). Los triggers son la segunda linea de defensa: aunque alguien ejecute SQL directo, queda la trazabilidad automatica en la bitacora."
 
-### Pregunta: "¿Cómo haces backup y restauración?"
+### B.4 Procedimiento — `sp_resumen_financiero(fecha_inicio, fecha_fin)`
 
-**Tu respuesta:**
-- **Backup:** `mysqldump -u root -p estadio_db > backup_estadio_db.sql` y lo mismo para `seguridad`.
-- **Restauración:** `mysql -u root -p estadio_db < backup_estadio_db.sql`.
-- Para un backup completo: `mysqldump -u root -p --all-databases > backup_completo.sql`.
+Devuelve 4 result sets en 1 sola llamada:
+1. Resumen de contratos (total, vigentes, vencidos)
+2. Pagos recibidos (total, promedio, mayor)
+3. Top-10 patrocinadores por monto pagado
+4. Contratos por vencer (proximos 30 dias)
+
+**Como defenderlo:** "Un solo `CALL sp_resumen_financiero('2026-01-01', '2026-12-31')` genera todo el dashboard financiero. Evita 4 round-trips a la BD."
+
+### B.5 Respaldo de BD
+
+- Boton "Respaldar BD" en el modulo de Roles y Permisos
+- Ejecuta `mysqldump` server-side y descarga el archivo `.sql`
+- Solo respalda `estadio_db` (esquema de negocio)
+
+**Como defenderlo:** "Desde el sistema mismo, cualquier administrador puede generar un respaldo completo de la base de datos de negocio con un click. El archivo se descarga automaticamente."
+
+### B.6 Concurrencia
+
+- `autocommit(True)` por defecto + `transaction()` context manager para multi-statement
+- Nivel de aislamiento: REPEATABLE READ (default MySQL)
+- Para ~30 usuarios simultaneos es suficiente
+
+**Pregunta trampa:** "Que pasa si dos usuarios editan el mismo registro?"
+**Respuesta:** "Uso transacciones atomicas con commit/rollback. Para este volumen, REPEATABLE READ es adecuado."
 
 ---
 
-## C. INGENIERÍA DE SOFTWARE (15%)
+## C. INGENIERIA DE SOFTWARE (15%)
 
-Tu sistema tiene:
-
-- **19 módulos** con arquitectura MVC clara (controller → model → view).
-- **Chatbot** basado en reglas (sin LLM) en `helpers/chat_knowledge.py`.
-- **Sistema de notificaciones** en tiempo real con SocketIO (push + badge + dropdown).
-- **Dashboard** principal con widgets de acceso rápido.
-- **Roles y permisos** granulares (19 blueprints, 50+ permisos, sistema many-to-many).
-- **Bitácora** completa con trazabilidad de quién hace qué.
-
-> **Nota:** Los diagramas UML, la plantilla IBM y el SRS son documentación que debes tener aparte. El código no los contiene.
+- **19 modulos** con arquitectura MVC clara
+- **Chatbot** basado en reglas (sin LLM) en `helpers/chat_knowledge.py`
+- **Notificaciones** en tiempo real: SocketIO push + badge + dropdown
+- **Roles y permisos**: 52 permisos, sistema many-to-many
+- **Bitacora** completa con trazabilidad
 
 ---
 
 ## D. SERVIDORES Y CONCURRENCIA (5%)
 
-### Pregunta: "¿Cómo configuraste el servidor?"
+- **Flask** + **Flask-SocketIO** + **eventlet**
+- Dev: `run.py` → `socketio.run(app, debug=True, port=5001)`
+- Prod: `gunicorn -k eventlet -w 1 wsgi:app`
+- No Apache (stack Python, no PHP)
 
-**Tu respuesta:** Mi servidor es **Flask** con **Flask-SocketIO** y **eventlet** como servidor async.
-
-- **Desarrollo:** `run.py` ejecuta `socketio.run(app, debug=True, port=5001)`.
-- **Producción:** `gunicorn -k eventlet -w 1 wsgi:app` (un solo worker porque el estado de usuarios conectados está en memoria).
-
-**¿Por qué no Apache?** Mi sistema es Python/Flask, no PHP. Flask es un framework WSGI que incluye su propio servidor de desarrollo. En producción se usa gunicorn, que es un servidor WSGI estándar. No necesito Apache ni VirtualHost.
-
-### Pregunta: "¿Cómo manejas los errores?"
-
-**Tu respuesta:** Tengo 3 manejadores de error registrados en `app/__init__.py`:
-- **404** — Página no encontrada
-- **500** — Error interno del servidor
-- **Error de conexión BD** — `pymysql.err.OperationalError`
-
-Todos renderizan una plantilla de error estilizada (`app/view/error/error.html`). Cada operación de BD está envuelta en `try/except` que registra el error con `logger.exception()` y nunca expone trazas al usuario.
+**Error handlers**: 404, 500, y error de conexion BD → todos renderizan `error.html`
 
 ---
 
 ## E. NOTIFICACIONES EN TIEMPO REAL
 
-- **Backend:** Tabla `seguridad.notificaciones` con campos: usuario_id, tipo, titulo, mensaje, url, leida, fecha_creacion.
-- **Modelo:** `NotificacionModel` con crear, listar, contar_no_leidas, marcar_leida, marcar_todas.
-- **Controlador:** API REST en `/notificaciones/api` que devuelve JSON con tiempo relativo ("hace 5 min").
-- **Frontend:** Campana global en `components/head.html` con badge dinámico.
-- **Push:** SocketIO emite `notificacion_nueva` a salas privadas `user_{id}`.
-- **JS:** `static/js/notificaciones.js` — pull al abrir dropdown + push por socket + SweetAlert toast.
+- Tabla `seguridad.notificaciones` + `NotificacionModel`
+- API REST: `GET /notificaciones/api` → JSON con tiempo relativo
+- Push: SocketIO `notificacion_nueva` → salas privadas `user_{id}`
+- Frontend: Campana en `head.html` + `notificaciones.js` (pull + push + toast)
 
 ---
 
-## F. PUNTOS QUE FALTAN Y NECESITAS CREAR (CRÍTICOS)
+## F. CAMBIOS REALIZADOS — SESION COMPLETA
 
-El baremo **exige** al menos: una vista, un trigger, y un procedimiento o función.
+### F.1 Bitacora mejorada
 
-### 1. Vista SQL
+- **Archivo**: `app/view/bitacora/dashboard.html`
+- **Cambio**: Badge de rol junto al nombre del usuario
+- **Cambio**: Icono de ojo al lado de la fecha que lleva al reporte de usuario
 
-```sql
--- Vista para reportes estadísticos de contratos
-CREATE VIEW vista_resumen_contratos AS
-SELECT
-    c.id_contrato,
-    p.nombre_empresa,
-    c.tipo,
-    c.monto_total,
-    c.estado,
-    c.estatus,
-    c.fecha_inicio,
-    c.fecha_fin,
-    DATEDIFF(c.fecha_fin, CURDATE()) AS dias_restantes
-FROM contrato c
-JOIN patrocinadores p ON c.id_patrocinador = p.id_patrocinador;
-```
+### F.2 Respaldo de BD
 
-**Cómo defenderla:** "Creé una vista que une contratos con patrocinadores para facilitar los reportes estadísticos. Permite consultar el estado, monto y días restantes de cada contrato sin repetir el JOIN en cada consulta."
+- **Archivos modificados**:
+  - `app/controller/rol_controller.py` → nueva ruta `POST /roles/respaldo`
+  - `app/helpers/permission_map.py` → nuevo permiso `rol.respaldo`
+  - `app/view/rol/dashboard.html` → boton "Respaldar BD" + funcion JS con SweetAlert
+- **Funcionamiento**: SweetAlert confirma → `mysqldump` genera archivo → descarga automatica
 
-### 2. Trigger (alimenta bitácora automáticamente)
+### F.3 Objetos SQL para la defensa
 
-```sql
--- Trigger que registra en bitácora cuando se modifica un contrato
-DELIMITER //
-CREATE TRIGGER trg_bitacora_contrato_update
-AFTER UPDATE ON contrato
-FOR EACH ROW
-BEGIN
-    INSERT INTO seguridad.actividad_usuario
-        (usuario_id, tipo_accion, modulo, accion, detalle, created_at)
-    VALUES
-        (NEW.id_contrato, 'update', 'contratos', 'Modificación de contrato',
-         JSON_OBJECT(
-            'registro_id', NEW.id_contrato,
-            'campo', 'monto_total',
-            'anterior', OLD.monto_total,
-            'nuevo', NEW.monto_total
-         ),
-         NOW());
-END //
-DELIMITER ;
-```
+- **Vista**: `v_balance_contratos` (contratos + patrocinadores + pagos)
+- **Triggers**: `trg_pagos_after_insert` y `trg_pagos_after_update` (auditoria financiera)
+- **Procedimiento**: `sp_resumen_financiero(fecha_inicio, fecha_fin)` (4 result sets)
 
-**Cómo defenderlo:** "Creé un trigger que dispara automáticamente después de cada UPDATE en la tabla `contratos`. Inserta un registro en la bitácora (`actividad_usuario`) con el valor anterior y el nuevo usando `JSON_OBJECT`. Así queda trazabilidad automática de quién modificó qué dato sensible."
+### F.4 Validaciones alineadas
 
-### 3. Procedimiento Almacenado o Función
+| Archivo | Cambio |
+|---------|--------|
+| `static/js/validacion.js` | `validarNombre`: minimo 2→3 |
+| `static/js/GestionMantenimiento.js` | diagnostico minimo 3→10 |
+| `static/js/validaciones/GestionInventarioValidacion.js` | Agregada validacion de costo |
+| `model/mantenimiento_model.py` | `modificar()` valida diagnostico y observaciones |
+| `model/guion_model.py` | `modificar()` elementos valida contenido, hora, inning |
+| `model/premio_model.py` | `_validar_datos_premio()` valida cantidad |
 
-```sql
--- Función que calcula el total de pagos de un contrato
-DELIMITER //
-CREATE FUNCTION total_pagos_contrato(p_id_contrato INT)
-RETURNS DECIMAL(12,2)
-DETERMINISTIC
-BEGIN
-    DECLARE v_total DECIMAL(12,2);
-    SELECT IFNULL(SUM(monto), 0)
-    INTO v_total
-    FROM pagos
-    WHERE id_contrato = p_id_contrato;
-    RETURN v_total;
-END //
-DELIMITER ;
+### F.5 Fix: Bugs de reportes (6 fixes)
 
--- Ejemplo de uso:
--- SELECT id_contrato, nombre_empresa, total_pagos_contrato(id_contrato) AS total_pagado
--- FROM vista_resumen_contratos;
-```
+| Bug | Archivo | Fix |
+|-----|---------|-----|
+| Bitacora PDF mostraba `accion` en vez de `detalle` | `bitacora_report.py:48` | Cambiado a `d.get('detalle')` |
+| Mantenimiento PDF faltaba columna "Dias" | `mantenimiento_report.py` | Agregada columna `dias_en_taller` |
+| Fechas NULL siempre incluidas con filtro activo | `reportes_utils.py:40` | Excluidas cuando hay filtro de fecha |
+| Formato inconsistente date vs datetime | `reportes_controller.py:514` | Check `isinstance(v, date)` |
+| Contratos filtro fecha solo revisaba `fecha_inicio` | `reportes_data.py:350` | Verifica solapamiento inicio↔fin |
+| base_report.py mutaba dict del caller | `base_report.py` | `filtros.pop` → `filtros.get` |
 
-**Cómo defenderlo:** "Creé una función almacenada que calcula el total pagado por un contrato sumando todos sus pagos. Se puede usar directamente en consultas SQL o结合 con la vista `vista_resumen_contratos` para reportes completos."
+### F.6 Reels — Duracion en segundos
+
+- `duracion_total` ahora en SECONDS (convertido desde minutos)
+- Vista detalle muestra duracion planificada vs consumida con barra de progreso
+
+### F.7 Patrocinador — RIF separado
+
+- RIF separado en selector V/E/J/G + numeros separados
+- `nombre_contacto` ahora requerido con validacion
+
+### F.8 Constructor report — Error con detalle
+
+- Error response ahora incluye campo `detalle` para debugging
+- Frontend muestra el detalle en SweetAlert de error
+
+### F.9 Seed data realista
+
+- **10 patrocinadores** — Empresas venezolanas reales
+- **10 contratos** — Montos desde $8,000 hasta $150,000
+- **14 pagos** — Pagos parciales con referencias
+- **6 guiones** con 30 elementos (programacion completa)
+- **6 usuarios** con passwords `password123`
 
 ---
 
-## G. CHECKLIST RÁPIDO PARA LA DEFENSA
+## G. CHECKLIST DE DEFENSA
 
-### Lo que debes demostrar EN VIVO:
+### Demostrar EN VIVO:
 
-- [ ] **Login** con captcha de béisbol → mostrar que rechaza si el captcha está mal
-- [ ] **Sesión única** → abrir dos navegadores, iniciar sesión en ambos, mostrar que el primero se cierra
-- [ ] **Dashboard** principal con widgets
-- [ ] **CRUD de un módulo** (ej: inventario) → crear, editar, buscar, eliminar con SweetAlert
-- [ ] **Validación** → intentar enviar un formulario vacío, mostrar errores en frontend
-- [ ] **Bitácora** → ir al módulo de bitácora, mostrar registros de las acciones que acabas de hacer
-- [ ] **Reportes** → generar un PDF con filtros, mostrar el archivo generado
-- [ ] **Notificaciones** → asignar una tarea a otro usuario, mostrar la campana con badge
-- [ ] **Roles/permisos** → mostrar que un usuario sin permiso no puede acceder a cierta ruta
-- [ ] **EN VIVO** → si tienes guiones publicados, mostrar el módulo en vivo con SocketIO
+1. Login con captcha → mostrar rechazo si captcha mal
+2. Sesion unica → 2 navegadores, mostrar cierre automatico
+3. CRUD completo (ej: inventario) → crear, editar, buscar, eliminar con SweetAlert
+4. Validacion → enviar formulario vacio, mostrar errores inline
+5. Bitacora → ir al modulo, mostrar registros de acciones recientes + rol + ojito
+6. Reportes → generar PDF con filtros, mostrar archivo
+7. Notificaciones → asignar tarea, mostrar campana con badge
+8. Roles/permisos → mostrar acceso restringido
+9. Respaldo BD → boton en Roles, descargar archivo .sql
+10. Objetos SQL → mostrar vista, triggers y procedimiento en MySQL
 
-### Lo que debes explicar TEÓRICAMENTE:
+### Explicar TEORICAMENTE:
 
-- [ ] **Normalización 3NF** → explica por qué separaste tablas (ej: `departamentos` es tabla lookup, no un campo en `usuarios`)
-- [ ] **Índices** → explica que aceleran las búsquedas en columnas frecuentemente filtradas
-- [ ] **Vista** → explica que simplifica consultas con JOINs frecuentes
-- [ ] **Trigger** → explica que alimenta la bitácora automáticamente sin código de aplicación
-- [ ] **Función almacenada** → explica que encapsula lógica de cálculo reutilizable
-- [ ] **Transacciones** → explica el patrón `transaction()` con commit/rollback
-- [ ] **Concurrencia** → explica que MySQL usa REPEATABLE READ por defecto y que para tu volumen es suficiente
-- [ ] **Backup** → muestra el comando `mysqldump`
+- Normalizacion 3NF (ej: `departamentos` es tabla lookup)
+- Indices (73 total, aceleran busquedas)
+- Vista (simplifica JOINs frecuentes)
+- Trigger (auditoria automatica sin codigo de aplicacion)
+- Procedimiento (encapsula logica reutilizable)
+- Transacciones (`transaction()` con commit/rollback)
+- Concurrencia (REPEATABLE READ, suficiente para ~30 usuarios)
+- Backup (desde el sistema con `mysqldump`)
 
-### Preguntas trampa que pueden hacerte:
+### Preguntas trampa:
 
-1. **"¿Por qué no usaste MD5?"** → "MD5 está obsoleto y vulnerable. Usé `pbkdf2:sha256` que es el estándar actual de Werkzeug/Flask. Si el baremo requiere MD5 explícitamente, puedo cambiarlo, pero técnicamente es peor."
-2. **"¿Por qué no tienes Apache?"** → "Mi stack es Python/Flask, no PHP. Flask tiene su propio servidor de desarrollo y gunicorn para producción. Apache es para PHP/Java."
-3. **"¿Qué pasa si falla la BD?"** → "Tengo un error handler registrado para `pymysql.err.OperationalError` que muestra una página de error amigable. Las transacciones hacen rollback automático."
-4. **"¿Cómo escalas?"** → "Actualmente uso 1 worker con estado en memoria para ~30 usuarios. Para escalar necesitaría mover el estado de SocketIO a Redis y usar múltiples workers."
-
----
-
-## H. CÓMO AGREGAR LA VISTA, TRIGGER Y FUNCIÓN A TU BD
-
-### Paso 1: Ejecutar el SQL
-
-```bash
-mysql -u root -p estadio_db < sql_defensa.sql
-```
-
-### Paso 2: El archivo `sql_defensa.sql`
-
-Contiene los 3 objetos SQL listos para ejecutar (vista + trigger + función).
-
-### Paso 3: Verificar
-
-```sql
--- Ver la vista
-SELECT * FROM vista_resumen_contratos LIMIT 5;
-
--- Ver la función
-SELECT total_pagos_contrato(1);
-
--- Ver los triggers
-SHOW TRIGGERS FROM estadio_db;
-```
+1. **"Por que no MD5?"** → "Esta obsoleto. Use pbkdf2:sha256, estandar actual."
+2. **"Por que no Apache?"** → "Stack Python/Flask, no PHP. Gunicorn para produccion."
+3. **"Que pasa si falla la BD?"** → "Error handler + rollback automatico en transacciones."
+4. **"Como escalas?"** → "Mover SocketIO a Redis + multiples workers."
 
 ---
 
-## I. ESTRUCTURA DEL SISTEMA (para estudiar)
+## H. ESTRUCTURA DEL SISTEMA
 
 ```
 app/
-├── __init__.py          # create_app(), 19 blueprints, SocketIO, CSRF, sesión única
+├── __init__.py          # create_app(), 19 blueprints, SocketIO, CSRF
 ├── config.py            # DATABASE_CONFIG (lee .env)
 ├── database.py          # Database.get_connection(), transaction()
-├── controller/          # 19 controladores Flask (uno por módulo)
-├── model/               # 19 modelos con setters validadores + SQL
-├── helpers/             # decorators, bitacora, reportes, chat, email
-├── view/                # Templates HTML (un subdirectorio por módulo)
-└── static/
-    ├── js/              # 28 archivos JS (Gestion*.js por módulo)
-    └── css/             # Estilos por módulo
+├── controller/          # 19 controladores (uno por modulo)
+├── model/               # 19 modelos con validadores + SQL
+├── helpers/             # decorators, bitacora, reportes, chat
+├── view/                # Templates HTML por modulo
+└── static/js/           # 28 archivos JS (Gestion*.js)
 
-estadio_db.sql           # Esquema de negocio (20 tablas)
-seguridad.sql            # Esquema de seguridad (15 tablas)
+estadio_db.sql           # 20 tablas + vista + triggers + procedimiento
+seguridad.sql            # 15 tablas (usuarios, roles, bitacora, etc.)
 ```
 
-**19 módulos:** Auth, Dashboard, Usuarios, Guiones, En Vivo, Mantenimiento, Premios, Contratos, Balance, Tareas, Patrocinadores, Bitácora, Roles, Inventario, Reels, Reportes, Chat, Notificaciones, Ayuda.
+**19 modulos:** Auth, Dashboard, Usuarios, Guiones, En Vivo, Mantenimiento, Premios, Contratos, Balance, Tareas, Patrocinadores, Bitacora, Roles, Inventario, Reels, Reportes, Chat, Notificaciones, Ayuda.
+
+---
+
+## I. USUARIOS DE PRUEBA
+
+| Email | Contrasena | Rol |
+|-------|-----------|-----|
+| keiver@cardenales.com | password123 | Superadmin |
+| carlos@mendoza.com | password123 | Superadmin |
+| ana.perez@outlook.com | password123 | Administrador |
+| genesis@cardenales.com | password123 | Administrador |
+| maria.gonzalez@gmail.com | password123 | Usuario |
+| roberto.diaz@hotmail.com | password123 | Usuario |
+
+---
+
+*Ultima actualizacion: 18 de septiembre 2026*

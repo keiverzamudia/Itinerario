@@ -96,6 +96,7 @@ ROL = {
     'rol.editar': 'rol.edit',
     'rol.editar_rol': 'rol.edit',
     'rol.crear': 'rol.edit',
+    'rol.respaldo': 'rol.edit',
 }
 
 BITACORA = {

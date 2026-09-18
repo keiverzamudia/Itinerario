@@ -386,6 +386,16 @@ class ElementoGuionModel(ValidacionesMixin):
             return None
 
     def modificar(self, id_registro, datos):
+        if 'contenido' in datos and datos['contenido']:
+            if len(str(datos['contenido'])) < 5 or len(str(datos['contenido'])) > 500:
+                self.errores.append('El contenido debe tener entre 5 y 500 caracteres')
+                return None
+        if 'tipo' in datos and datos.get('tipo') == 'pregame' and not datos.get('hora'):
+            self.errores.append('Para Pre-Game debes indicar una hora')
+            return None
+        if 'tipo' in datos and datos.get('tipo') == 'game' and (not datos.get('inning') or not datos.get('medio_inning')):
+            self.errores.append('Para Game debes seleccionar inning y medio')
+            return None
         try:
             sets = []
             params = []

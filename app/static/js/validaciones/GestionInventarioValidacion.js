@@ -1,17 +1,15 @@
-import { validarNombre, validarDescripcion, validarFechaOpcional, validarSelect } from '../validacion.js';
+import { validarNombre, validarDescripcion, validarFechaOpcional, validarSelect, validarCosto } from '../validacion.js';
 
 export function validarFormularioActivo() {
     const tipo = document.getElementById('id_tipo_activo');
     const nombre = document.getElementById('Nombre');
     const descripcion = document.getElementById('Descripcion');
     const fecha = document.getElementById('Fecha_adquisicion');
+    const costo = document.getElementById('costo');
 
-    return (
-        validarSelect(tipo) &&
-        validarNombre(nombre) &&
-        validarDescripcion(descripcion) &&
-        validarFechaOpcional(fecha)
-    );
+    let ok = validarSelect(tipo) && validarNombre(nombre) && validarDescripcion(descripcion) && validarFechaOpcional(fecha);
+    if (costo && costo.value) ok = ok && validarCosto(costo);
+    return ok;
 }
 
 export function validarFormularioTipoActivo() {

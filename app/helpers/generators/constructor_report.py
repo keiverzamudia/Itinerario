@@ -7,7 +7,7 @@ import io
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table
+from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.helpers.generators.base_report import BaseReportGenerator
 

@@ -61,10 +61,15 @@ def _sanitizar_para_reporte(modulo, datos):
         resumen_ids['patrocinador'] = {p['id_patrocinador']: p['nombre_empresa'] for p in pats}
     if modulo in ('bitacora', 'tareas', 'mantenimiento'):
         try:
-            um = UsuarioModel()
-            users = um.consultar()
-            resumen_ids['usuario'] = {u['id']: u['nombre'] for u in users if hasattr(u, 'get') or hasattr(u, 'nombre')}
-            resumen_ids['usuario'].update({u.id: u.nombre for u in users if hasattr(u, 'id') and not isinstance(u, dict)})
+            from app.model.auth_model import UsuarioModel as AuthUsuarioModel
+            users = AuthUsuarioModel().consultar()
+            user_map = {}
+            for u in users:
+                if isinstance(u, dict):
+                    user_map[u['id']] = u['nombre']
+                elif hasattr(u, 'id') and hasattr(u, 'nombre'):
+                    user_map[u.id] = u.nombre
+            resumen_ids['usuario'] = user_map
         except Exception:
             resumen_ids['usuario'] = {}
 
@@ -347,11 +352,21 @@ def _datos_contratos(filtros, fi, ff):
         except ValueError:
             pass
 
-    datos = _filtrar_por_fecha(datos, 'fecha_inicio', fi, ff)
+    if fi or ff:
+        datos_filtrados = []
+        for d in datos:
+            f_inicio = d.get('fecha_inicio')
+            f_fin = d.get('fecha_fin')
+            if f_inicio and fi and str(f_inicio)[:10] > str(ff or '9999-12-31'):
+                continue
+            if f_fin and ff and str(f_fin)[:10] < str(fi or '0000-01-01'):
+                continue
+            datos_filtrados.append(d)
+        datos = datos_filtrados
 
     for d in datos:
         d['tipo'] = TIPO_CONTRATO_MAP.get(str(d.get('tipo', '')), d.get('tipo', '—'))
-        d['nombre_empresa'] = d.get('nombre_empresa', d.get('nombre_empresa', '—'))
+        d['nombre_empresa'] = d.get('nombre_empresa', '—')
         if d.get('fecha_fin'):
             try:
                 ffin = d['fecha_fin']
@@ -622,27 +637,27 @@ def _datos_reels(filtros, fi, ff):
     datos = model.consultar()
     if filtros.get('patrocinador_id'):
         datos = [d for d in datos if str(d.get('patrocinado', '')) == str(filtros['patrocinador_id'])]
-    # rango de duración en segundos (duracion_total se guarda en minutos)
+    # rango de duración en segundos (duracion_total se guarda en segundos)
     if filtros.get('duracion_min'):
         try:
             v = float(filtros['duracion_min'])
-            datos = [d for d in datos if float(d.get('duracion_total', 0) or 0) * 60 >= v]
+            datos = [d for d in datos if float(d.get('duracion_total', 0) or 0) >= v]
         except (ValueError, TypeError):
             pass
     if filtros.get('duracion_max'):
         try:
             v = float(filtros['duracion_max'])
-            datos = [d for d in datos if float(d.get('duracion_total', 0) or 0) * 60 <= v]
+            datos = [d for d in datos if float(d.get('duracion_total', 0) or 0) <= v]
         except (ValueError, TypeError):
             pass
     datos = _filtrar_por_fecha(datos, 'creado_en', fi, ff)
     total_videos = sum(len(r.get('videos', [])) for r in datos)
-    duracion_total_seg = sum(float(r.get('duracion_total', 0) or 0) * 60 for r in datos)
+    duracion_total_seg = sum(float(r.get('duracion_total', 0) or 0) for r in datos)
     for d in datos:
         d['videos_count'] = len(d.get('videos', []))
-        duracion_seg = float(d.get('duracion_total', 0) or 0) * 60
-        minutos = int(duracion_seg // 60)
-        segundos = int(duracion_seg % 60)
+        duracion_seg = int(float(d.get('duracion_total', 0) or 0))
+        minutos = duracion_seg // 60
+        segundos = duracion_seg % 60
         d['duracion'] = f"{minutos}m {segundos}s" if minutos > 0 else f"{segundos}s"
         if hasattr(d.get('creado_en'), 'strftime'):
             d['creado_en'] = d['creado_en'].strftime('%d/%m/%Y %H:%M')
@@ -654,9 +669,15 @@ def _datos_reels(filtros, fi, ff):
     duracion_total_min = duracion_total_seg / 60
     kpis = {
         'total': len(datos), 'total_videos': total_videos,
-        'duracion_total': f"{duracion_total_min:.0f} min",
-        'duracion_promedio': f"{duracion_total_min / len(datos):.0f} min" if datos else "0 min",
+        'duracion_total': f"{duracion_total_seg / 60:.0f} min",
+        'duracion_promedio': f"{duracion_total_seg / len(datos) / 60:.0f} min" if datos else "0 min",
     }
+    from app.model.patrocinador_model import PatrocinadorModel
+    pat_map = {p['id_patrocinador']: p['nombre_empresa'] for p in PatrocinadorModel().consultar()}
+    for d in datos:
+        pid = d.get('patrocinado')
+        if pid and pid in pat_map:
+            d['patrocinado'] = pat_map[pid]
     return datos, kpis
 
 def _datos_bitacora(filtros, fi, ff):

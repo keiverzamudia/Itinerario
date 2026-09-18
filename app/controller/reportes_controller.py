@@ -353,7 +353,7 @@ def _filtros_reels(params):
     from app.model.reels_model import ReelModel
     patrocinadores = PatrocinadorModel().consultar()
 
-    # pistas del rango de duración en segundos (duracion_total se guarda en minutos)
+    # pistas del rango de duración en segundos (duracion_total se guarda en segundos)
     duracion_min, duracion_max = 0, 3600
     try:
         db = ReelModel()._get_db()
@@ -361,8 +361,8 @@ def _filtros_reels(params):
             cur.execute("SELECT MIN(duracion_total), MAX(duracion_total) FROM reels")
             row = cur.fetchone()
             if row and row[0] is not None:
-                duracion_min = int(float(row[0]) * 60)
-                duracion_max = max(int(float(row[1]) * 60), duracion_min)
+                duracion_min = int(float(row[0]))
+                duracion_max = max(int(float(row[1])), duracion_min)
     except Exception:
         logger.exception('Error cargando rangos de duración de reels')
 
@@ -508,12 +508,15 @@ COLUMNAS_PREVIEW = {
 def _serializar_datos(datos):
     """Convierte datos planos a JSON-safe. Ya vienen sanitizados."""
     from decimal import Decimal
+    from datetime import date
     resultado = []
     for d in datos:
         fila = {}
         for k, v in d.items():
             if isinstance(v, datetime):
-                fila[k] = v.strftime('%d/%m/%Y %H:%M' if hasattr(v, 'hour') else '%d/%m/%Y')
+                fila[k] = v.strftime('%d/%m/%Y %H:%M')
+            elif isinstance(v, date):
+                fila[k] = v.strftime('%d/%m/%Y')
             elif isinstance(v, Decimal):
                 fila[k] = float(v)
             elif isinstance(v, (int, float, str, bool, type(None))):
@@ -721,9 +724,10 @@ def construir():
         dataset = ejecutar(modulo, peticion)
     except ConstructorError as e:
         return jsonify({'error': str(e)}), 400
-    except Exception:
-        logger.exception('Error no controlado')
-        return jsonify({'error': 'Error al construir el reporte'}), 500
+    except Exception as e:
+        logger.exception('Error no controlado en constructor')
+        detalle = str(e) if str(e) else type(e).__name__
+        return jsonify({'error': 'Error al construir el reporte', 'detalle': detalle}), 500
     return jsonify(dataset)
 
 

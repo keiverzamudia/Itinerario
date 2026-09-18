@@ -8,9 +8,14 @@
             </h1>
             <p class="text-muted mb-0">Gestión de roles, permisos y visibilidad del dashboard.</p>
         </div>
-        <a href="{{ url_for('rol.crear') }}" class="btn btn-primary px-4 py-2 shadow-sm fw-bold" style="border-radius: 6px;">
-            <i class="fas fa-plus-circle me-2"></i>Crear Rol
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('rol.crear') }}" class="btn btn-primary px-4 py-2 shadow-sm fw-bold" style="border-radius: 6px;">
+                <i class="fas fa-plus-circle me-2"></i>Crear Rol
+            </a>
+            <button class="btn btn-success px-4 py-2 shadow-sm fw-bold" style="border-radius: 6px;" onclick="respaldarBD()">
+                <i class="fas fa-database me-2"></i>Respaldar BD
+            </button>
+        </div>
     </div>
 
     <div class="card border-0 shadow-sm mb-4">
@@ -111,4 +116,45 @@
 </div>
 
 <script type="module" src="{{ url_for('static', filename='js/GestionRol.js') }}"></script>
+<script>
+function respaldarBD() {
+    Swal.fire({
+        title: '¿Crear respaldo completo?',
+        text: 'Se descargará un archivo .sql con toda la base de datos estadio_db',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, respaldar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({ title: 'Generando respaldo...', text: 'Por favor espera', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            var csrf = document.querySelector('input[name="csrf_token"]');
+            fetch('/roles/respaldo', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrf ? csrf.value : '' }
+            })
+            .then(function(resp) {
+                if (!resp.ok) throw new Error('Error al generar respaldo');
+                return resp.blob();
+            })
+            .then(function(blob) {
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'estadio_db_respaldo_' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '.sql';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                Swal.fire('Listo', 'Respaldo descargado correctamente', 'success');
+            })
+            .catch(function(err) {
+                Swal.fire('Error', 'No se pudo generar el respaldo', 'error');
+            });
+        }
+    });
+}
+</script>
 {% include 'components/footer.html' %}
